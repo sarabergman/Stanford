@@ -1,0 +1,12 @@
+/ContrastName1	group mean 
+/ContrastName2	events 
+/ContrastName3	events neg 
+/NumWaves	2
+/NumContrasts	3
+/PPheights		1.000487e+00	1.400000e+01	1.400000e+01
+/RequiredEffect		0.786	3.061	3.061
+
+/Matrix
+1.000000e+00 0.000000e+00 
+0.000000e+00 1.000000e+00 
+0.000000e+00 -1.000000e+00 

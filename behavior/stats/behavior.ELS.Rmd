@@ -1,0 +1,320 @@
+---
+title: "kidmid behavior and ELS"
+output: html_document
+---
+
+
+
+```{r}
+require(ggplot2)
+setwd("~/Documents/ELS/KIDMID/Analysis/behavior/R/")
+setwd("~/Box Sync/temp_9.15.14")
+d = read.csv("58subs_behavior_ELS_numeric.csv", header=TRUE) #change to updated version
+d = d[ -c(26,28,29,31:42,46:53)]  #removing uninteresting/unnecessary columns
+d = d[-32,] #if you want to remove outlier
+
+n = length(d$subID)
+accuracy = data.frame(d$subID,d$gain_acc,d$loss_acc,d$nongain_acc,d$nonloss_acc,d$total_acc,d$Sex)
+rt = data.frame(d$subID,d$rt_gain,d$rt_loss,d$rt_nongain,d$rt_nonloss,d$rt_mean,d$Sex)
+els = data.frame(d$subID,d$TotChildSubjRatUSE,d$TotEventsExpUSE,d$TotNumCategUSE)
+
+```
+
+Response Time
+-----------------
+
+```{r rt}
+#main effects of condition - for one-way ANOVA
+rt2 = stack(rt[2:5])
+
+#
+
+hist(d$rt_gain)
+hist(d$rt_loss)
+hist(d$rt_nongain)
+hist(d$rt_nonloss)
+hist(d$rt_mean)
+
+boxplot(rt[ -c(1,7)], names = c("gain","loss","nongain","nonloss","mean"),ylab=("response time (ms)"), do.out = TRUE)
+out1 = boxplot.stats(d$rt_gain, do.out=TRUE)
+out1
+
+
+#create barplot
+rt_means = c(mean(d$rt_gain),mean(d$rt_loss),mean(d$rt_nongain),mean(d$rt_nonloss))
+rt_sd = c(sd(d$rt_gain),sd(d$rt_loss),sd(d$rt_nongain),sd(d$rt_nonloss))
+par(mfrow=c(1,1))
+bp1 = barplot(rt_means, names.arg = c("gain","loss","nongain","nonloss"), main = "Response Time", ylim=c(0,300))
+mean(d$rt_mean)
+sd(d$rt_mean) 
+
+
+rt.summary = data.frame(
+  condition = levels(rt2$ind),
+  mean = tapply(rt2$values, rt2$ind, mean),
+  n = tapply(rt2$values, rt2$ind, length),
+  sd = tapply(rt2$values, rt2$ind, sd)
+  )
+
+#calculate standard error of the mean 
+rt.summary$sem = rt.summary$sd/sqrt(rt.summary$n) 
+
+#error bars represent standard error of the mean
+g2.SE = ggplot(rt.summary, aes(x = condition, y = mean)) + 
+  geom_bar(position = position_dodge(), stat="identity", fill="light blue", width=.8) +
+  geom_errorbar(aes(ymin=mean-sem, ymax=mean+sem), width=.2) +
+  labs(x = " ", y = " ") + 
+  ggtitle(" ") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme(panel.grid.major = element_blank(), axis.text=element_text(size = 16))
+print(g2.SE)
+
+oneway.test(values ~ ind, var.equal=TRUE, data=rt2)
+#F(3,228) = 1.74, p = .16
+bartlett.test(rt2)
+oneway.test(values ~ ind, var.equal=FALSE, data=rt2)
+#no sig difference between any conditions and grand mean
+#(F(3, 126) = 1.81, p = .15) with outlier (sub 39), without outlier: F(3,123) = 2.54, p = .06
+aov1 = aov(values ~ ind, data=rt2)  #doesnt account for inhomogeneity in variances
+anova(lm(values ~ ind, data=rt2)) #same here
+
+summary(lm(rt2$values ~ rt2$ind))  #this doesnt account for inhomogeneity in variances, but it shows the t-tests for each condition against rt_gain 
+
+
+t.test(d$rt_gain,d$rt_nongain, var.equal = FALSE)
+#p = .08, t = -1.75, but without outlier: t(101) = -2.07, p = .04
+t.test(d$rt_gain,d$rt_nonloss)
+#p = .04, t = -2.13, but without outlier: t(110) = -2.48, p = .01
+t.test(d$rt_gain,d$rt_loss)
+#p = .36, t = -.92, but without outlier: t(110) = -1.12, p = .26
+t.test(d$rt_loss,d$rt_nonloss)
+#p = .23, t = -1.20, but without outlier: t(111) = -1.31, p = .19
+t.test(d$rt_loss,d$rt_nongain)
+#p = .37, t = -.90
+
+
+t.test(c(d$rt_gain,d$rt_loss),c(d$rt_nongain,d$rt_nonloss))
+#sig diff between incentive and nonincentive trials
+#p = .04, t = -2.10, without outlier: t(219) = -2.41, p = .02
+d$incentive.rt = d$rt_gain + d$rt_loss
+d$nonincentive.rt = d$rt_nongain + d$rt_nonloss
+
+#main effects of gender?
+
+rt4 = melt(rt[-c(1,6)], id=c("d.Sex"))  #reshapes the data (need reshape2)
+with(rt4, interaction.plot(x.factor = variable, trace.factor = d.Sex, response = value, fun = mean, type = "b" ))
+r1 = aov(lm(rt4$value ~ rt4$variable * rt4$d.Sex))
+summary(r1)
+
+contrasts(d$Sex)
+d$Sex.numeric = as.numeric(d$Sex)
+cor(rt,d$Sex.numeric) 
+
+f.rt_gain = d$rt_gain[d$Sex=="F"]
+m.rt_gain = d$rt_gain[d$Sex=="M"]
+t.test(f.rt_gain,m.rt_gain) #t = 1.8, p = .08
+
+f.rt_nongain = d$rt_nongain[d$Sex=="F"]
+m.rt_nongain = d$rt_nongain[d$Sex=="M"]
+t.test(f.rt_nongain,m.rt_nongain, var.equal = F) #t = 2.54, p = .01
+
+f.rt_loss = d$rt_loss[d$Sex=="F"]
+m.rt_loss = d$rt_loss[d$Sex=="M"]
+t.test(f.rt_loss,m.rt_loss, var.equal = F) #t = 2.17, p = .03
+
+f.rt_nonloss = d$rt_nonloss[d$Sex=="F"]
+m.rt_nonloss = d$rt_nonloss[d$Sex=="M"]
+t.test(f.rt_nonloss,m.rt_nonloss, var.equal = F) #t = 2.57, p = .01
+
+#one way test with gender
+oneway.test(rt_mean ~ Sex, data=d)
+#F(1,49) = 6.31, p = .02
+
+mean(d$rt_mean[d$Sex=="F"])
+sd(d$rt_mean[d$Sex=="F"])
+
+mean(d$rt_mean[d$Sex=="M"])
+sd(d$rt_mean[d$Sex=="M"])
+
+m.rt_mean = d$rt_mean[d$Sex=="M"]
+f.rt_mean = d$rt_mean[d$Sex=="F"]
+
+g1.SE = ggplot(d, aes(x = Sex, y = rt_mean)) + 
+  geom_bar(position = position_dodge(), stat="identity", fill="red", width=.5) +
+  #geom_errorbar(aes(ymin=mean-sem, ymax=mean+sem), width=.3) +
+  labs(x = "Condition", y = "Response Time (ms)") + 
+  ggtitle("Response Time by Condition") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank())
+print(g1.SE)
+
+
+#effects of els and gender
+els = d[35:37]
+cor(rt, els)
+
+cor.test(d$rt_mean,d$TotChildSubjRatUSE) # p =.71
+cor.test(d$incentive.rt,d$TotChildSubjRatUSE) #p = .63
+cor.test(d$nonincentive.rt, d$TotChildSubjRatUSE) # p = .03
+
+summary(lm(d$rt_gain ~ d$TotEventsExpUSE + d$Sex)) #main effect of gender: p = .09
+summary(lm(d$rt_gain ~ d$TotChildSubjRatUSE + d$Sex))  ##main effect of gender: p = .07 (no interaction)
+plot(summary(lm(d$rt_gain ~ d$TotNumCategUSE + d$Sex)) ##main effect of gender: p = .09
+summary(lm(d$rt_gain ~ d$TotNumCategUSE * d$Sex)) #ns
+
+summary(lm(d$rt_loss ~ d$TotEventsExpUSE)) # + d$Sex))
+summary(lm(d$rt_gain ~ d$TotChildSubjRatUSE)) # d$Sex))
+
+cor.test(d$rt_nongain,d$TotEventsExpUSE) #r = .22, p = .097
+cor.test(d$rt_nongain,d$TotNumCategUSE) #r = .20, p = .12
+cor.test(d$rt_nongain,d$TotChildSubjRatUSE) # r = .21, p = .11
+
+
+cor.test(d$rt_nonloss,d$TotEventsExpUSE) #r = .36, p = .005
+cor.test(d$rt_nonloss,d$TotNumCategUSE) #r = .34, p = .01
+cor.test(d$rt_nonloss,d$TotChildSubjRatUSE) #r = .30, p = .02 
+
+cor.test(d$rt_loss,d$TotChildSubjRatUSE) #p = .75
+cor.test(d$rt_gain,d$TotChildSubjRatUSE) # p = .54
+
+summary(lm(d$rt_nonloss ~ d$TotChildSubjRatUSE + d$Sex)) #both main effects significant
+summary(lm(d$rt_gain ~ d$TotChildSubjRatUSE + d$Sex))
+
+ratings = d[28:34]
+#replace(ratings, which(ratings=="positive"),values = 7) 
+ratings[ratings=="positive"]<-7
+els.ratings = data.frame(ratings,els)
+els.ratings = cbind(els, ratings)
+els.ratings = els.ratings[complete.cases(els.ratings),]
+cor(els.ratings)
+
+cor.test(d$Prize_3, d$TotChildSubjRatUSE)
+cor.test(d$Prize_3, d$TotEventsExpUSE)
+cor.test(d$Prize_3, d$TotNumCategUSE)
+
+cor.test(d$KIDMID_Post_II_4, d$TotChildSubjRatUSE)
+cor.test(d$KIDMID_Post_II_4, d$TotEventsExpUSE)
+cor.test(d$KIDMID_Post_II_4, d$TotNumCategUSE)
+
+summary(lm(d$Prize_3 ~ d$Sex)) #ns
+summary(lm(d$KIDMID_Post_II_1 ~ d$Sex)) #(p = .01) males felt more negative with potential loss (sqr2)
+summary(lm(d$KIDMID_Post_II_2 ~ d$Sex)) #ns for sqr
+summary(lm(d$KIDMID_Post_II_3 ~ d$Sex)) #ns for cir2
+summary(lm(d$KIDMID_Post_II_4 ~ d$Sex)) #ns for cir
+
+summary(lm(d$KIDMID_Post_II_1 ~ d$Sex + d$TotChildSubjRatUSE)) #controlling for ELS, p = .008
+summary(lm(d$KIDMID_Post_II_1 ~ d$Sex * d$TotChildSubjRatUSE)) 
+
+mean(d$KIDMID_Post_II_1[d$Sex=="M"])
+mean(d$KIDMID_Post_II_1[d$Sex=="F"], na.rm = TRUE)
+
+```
+
+```{r accuracy}
+acc2 = stack(accuracy[2:5])
+
+hist(d$gain_acc)
+hist(d$loss_acc)
+hist(d$nongain_acc)
+hist(d$nonloss_acc)
+hist(d$total_acc)
+
+boxplot(accuracy[ -c(1)], names = c("gain","loss","nongain","nonloss","total"),ylab=("accuracy (%)"))
+#create barplot
+acc_means = c(mean(d$gain_acc),mean(d$loss_acc),mean(d$nongain_acc),mean(d$nonloss_acc))
+bp2 = barplot(acc_means, names.arg = c("gain","loss","nongain","nonloss"), main = "Hit Accuracy")
+
+acc.summary = data.frame(
+  condition = levels(acc2$ind),
+  mean = tapply(acc2$values, acc2$ind, mean),
+  n = tapply(acc2$values, acc2$ind, length),
+  sd = tapply(acc2$values, acc2$ind, sd)
+  )
+
+#calculate standard error of the mean 
+acc.summary$sem = acc.summary$sd/sqrt(acc.summary$n) 
+
+g2.SE = ggplot(acc.summary, aes(x = condition, y = mean)) + 
+  geom_bar(position = position_dodge(), stat="identity", fill="light blue", width=.8) +
+  geom_errorbar(aes(ymin=mean-sem, ymax=mean+sem), width=.2) +
+  labs(x = " ", y = " ") + 
+  ggtitle(" ") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme(panel.grid.major = element_blank(), axis.text=element_text(size = 16))
+print(g2.SE)
+
+mean(d$total_acc) #57.3%, sd = .14
+
+#oneway.test(values ~ ind, var.equal=TRUE, data=acc2)
+bartlett.test(acc2)
+oneway.test(values ~ ind, var.equal=FALSE, data=acc2)
+#F(3,126) = 3.79, p = .01
+
+t.test(d$gain_acc,d$loss_acc)
+#p = .04, t = 2.04
+t.test(d$gain_acc,d$nongain_acc)
+#p = .002, t = 3.11
+t.test(d$gain_acc,d$nonloss_acc)
+#p = .01, t = 2.62
+t.test(d$loss_acc,d$nonloss_acc)
+#p = .46, t = .74
+t.test(d$loss_acc,d$nongain_acc)
+#p = .18, t = 1.34
+
+t.test(c(d$gain_acc,d$loss_acc),c(d$nongain_acc,d$nonloss_acc))
+#p = .006, t = 2.78
+
+sd(d$gain_acc)
+sd(d$loss_acc)
+sd(d$nongain_acc)
+sd(d$nonloss_acc)
+
+cor.test(d$gain_acc,d$TotChildSubjRatUSE) #p = .40
+cor.test(d$loss_acc,d$TotChildSubjRatUSE) # p = .48
+cor.test(d$nongain_acc,d$TotChildSubjRatUSE) #p = .84
+cor.test(d$nonloss_acc,d$TotChildSubjRatUSE) #p = .18
+
+d$gainvnongain_acc = d$gain_acc - d$nongain_acc
+summary(lm(d$nongain_acc ~ d$Sex))
+summary(lm(d$gainvnongain_acc ~ d$Sex))
+summary(lm(d$gain_acc ~ d$TotChildSubjRatUSE * d$Sex))
+
+
+d$incentive.acc = d$gain_acc + d$loss_acc
+d$nonincentive.acc = d$nongain_acc + d$nonloss_acc
+
+cor.test(d$total_acc,d$TotChildSubjRatUSE)
+cor.test(d$incentive.acc,d$TotChildSubjRatUSE)
+cor.test(d$nonincentive.acc,d$TotChildSubjRatUSE)
+
+#gender
+acc3 = melt(accuracy[-c(1,6)], id=c("d.Sex"))  #reshapes the data (need reshape2)
+with(acc3, interaction.plot(x.factor = variable, trace.factor = d.Sex, response = value, fun = mean, type = "b" ))
+r2 = aov(lm(acc3$value ~ acc3$variable * acc3$d.Sex))
+summary(r2)
+
+
+oneway.test(d$total_acc ~ d$Sex)
+#no sig differences between girls and boys in accuracy across all conditions
+#F(1,46) = .29, p = .59
+
+f.gain_acc = d$gain_acc[d$Sex=="F"]
+m.gain_acc = d$gain_acc[d$Sex=="M"]
+t.test(f.gain_acc,m.gain_acc, var.equal = F) #p = .11
+
+f.nongain_acc = d$nongain_acc[d$Sex=="F"]
+m.nongain_acc = d$nongain_acc[d$Sex=="M"]
+t.test(f.nongain_acc,m.nongain_acc, var.equal = F) #p = .81
+
+f.loss_acc = d$loss_acc[d$Sex=="F"]
+m.loss_acc = d$loss_acc[d$Sex=="M"]
+t.test(f.loss_acc,m.loss_acc, var.equal = F) #p = .76
+
+f.nonloss_acc = d$nonloss_acc[d$Sex=="F"]
+m.nonloss_acc = d$nonloss_acc[d$Sex=="M"]
+t.test(f.nonloss_acc,m.nonloss_acc, var.equal = F) #p = .98
+
+```
+
+No relation between ELS and accuracy. No relation between gender and accuracy.

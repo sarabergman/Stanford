@@ -1,0 +1,12 @@
+/ContrastName1	group mean 
+/ContrastName2	categs 
+/ContrastName3	categs neg 
+/NumWaves	2
+/NumContrasts	3
+/PPheights		1.003071e+00	1.100000e+01	1.100000e+01
+/RequiredEffect		0.788	2.927	2.927
+
+/Matrix
+1.000000e+00 0.000000e+00 
+0.000000e+00 1.000000e+00 
+0.000000e+00 -1.000000e+00 

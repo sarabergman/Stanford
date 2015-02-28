@@ -1,0 +1,217 @@
+ELS, Social Support, and Insula
+==================================
+
+bilateral Insula
+-----------------
+
+```{r nacc load in data}
+require(ggplot2)
+setwd("~/Box Sync/9.9.14/58N_maineffect_HOatlas_union/")  
+ins = read.csv("ant+out_58subs_bilateralInsula09-Sep-2014.csv") #Insula - conjuntion of H-O atlas left and right insula with cope14 (outcome gain > nongain)
+```
+
+```{r nacc image}
+library("png")
+library("grid")
+ins.png = readPNG("~/Box Sync/9.9.14/58N_maineffect_HOatlas_union/insula.png")
+  grid.raster(ins.png)
+```
+
+```{r boxplot ins}
+boxplot(ins$antgain, ins$antloss, ins$antnongain, ins$antnonloss, ins$gain, ins$loss, ins$nongain, ins$nonloss, names = c("antgain","antloss","antnongain","antnonloss","gain","loss","nongain","nonloss"), ylab=("percent signal change in bilateral insula"), las =2)
+```
+
+```{r ins bar}
+#create dataframe to make bargraphs
+ins.pe = c(ins$antgain,ins$antloss,ins$antnongain,ins$antnongain,ins$gain, ins$loss, ins$nongain, ins$nonloss)
+condition.2 = c(rep(x = "antgain", times = 58), rep(x = "antloss", times = 58), rep(x = "antnongain", times = 58), rep(x = "antnonloss", times = 58),rep(x = "gain", times = 58), rep(x = "loss", times = 58), rep(x = "nongain", times = 58), rep(x = "nonloss", times = 58))
+insbar = data.frame(condition.2,ins.pe)
+
+ins.summary = data.frame(
+  condition = levels(insbar$condition.2),
+  mean = tapply(insbar$ins.pe, insbar$condition, mean),
+  n = tapply(insbar$ins.pe, insbar$condition, length),
+  sd = tapply(insbar$ins.pe, insbar$condition, sd)
+  )
+
+#calculate standard error of the mean 
+ins.summary$sem = ins.summary$sd/sqrt(ins.summary$n) 
+
+#calculate margin of error for CI
+alpha = .05 #95% confidence interval
+ins.summary$me = qt(1-alpha/2, df = ins.summary$n)*ins.summary$sem
+
+#error bars represent 95% CI
+#png('barplot.CI.vSTR.anticipation.png')
+g3.CI = ggplot(ins.summary, aes(x = condition, y = mean)) + 
+  geom_bar(position = position_dodge(), stat="identity", fill="blue", width=.5) +
+  geom_errorbar(aes(ymin=mean-me, ymax=mean+me), width=.3) +
+  ggtitle("Reward-Related Insula Activity / (Error bars represent 95% CI)") + # plot title
+  geom_hline(yintercept=0, linetype = 1) +
+  labs(x = "Anticipation and Outcome", y = "Percent BOLD signal change in Insula") +
+  theme_bw() +
+  #theme_classic()
+  theme(panel.grid.major = element_blank()) # remove x and y major grid lines
+print(g3.CI)
+#dev.off()
+
+#error bars represent standard error of the mean
+g3.SE = ggplot(ins.summary, aes(x = condition, y = mean)) + 
+  geom_bar(position = position_dodge(), stat="identity", fill="blue", width=.5) +
+  geom_errorbar(aes(ymin=mean-sem, ymax=mean+sem), width=.3) +
+  labs(x = "Anticipation and Outcome", y = "Percent BOLD signal change in Insula") +
+  ggtitle("Reward-Related Insula Activity / (Error bars represent SEM)") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank())
+print(g3.SE)
+```
+
+**The anticipatory activation in the insula mirrors that of the NAcc. The insula has been cited as being   region that is activated during the anticipation of loss, but in our sample the insula is not preferentially active for the anticipation of losses; instead it is responding to the anticipatory cues in much the same was as the NAcc. However, the increased response during the receipt of a loss relative to neutral and positive feedback is consistent with prior findings.**
+
+
+### Anticipation
+```{r ins cor ant}
+cor.test(ins$antgain, ins$TotEventsExpUSE) #ns
+cor.test(ins$antgain, ins$TotNumCategUSE) #ns
+cor.test(ins$antgain, ins$TotChildSubjRatUSE) #ns
+cor.test(ins$antgain, ins$ss.total) #ns
+
+cor.test(ins$antloss, ins$TotEventsExpUSE) #ns
+cor.test(ins$antloss, ins$TotNumCategUSE) #ns
+cor.test(ins$antloss, ins$TotChildSubjRatUSE) #ns
+cor.test(ins$antloss, ins$ss.total) #ns
+plot(ins$antloss, ins$TotEventsExpUSE) # example plot, no relation
+
+
+ins$antgainvnongain = ins$antgain - ins$antnongain
+ins$antlossvnonloss = ins$antloss - ins$antnonloss
+
+cor.test(ins$antgainvnongain,ins$TotEventsExpUSE) #ns
+cor.test(ins$antgainvnongain, ins$TotNumCategUSE) #ns
+cor.test(ins$antgainvnongain, ins$TotChildSubjRatUSE) #ns
+cor.test(ins$antgainvnongain, ins$ss.total) #ns
+
+#summary(lm(ins$TotChildSubjRatUSE ~ ins$antgainvnongain)) #same as above
+
+plot(ins$antlossvnonloss, ins$TotEventsExpUSE)
+cor.test(ins$antlossvnonloss,ins$TotEventsExpUSE) #ns
+cor.test(ins$antlossvnonloss, ins$TotNumCategUSE) #ns
+cor.test(ins$antlossvnonloss, ins$TotChildSubjRatUSE) #ns
+summary(lm(ins$antlossvnonloss ~ ins$TotNumCategUSE * ins$Age.at.scan)) #ns
+summary(lm(ins$antlossvnonloss ~ ins$TotEventsExpUSE * ins$Sex)) #ns
+```
+**There is no significant effect of ELS on bilateral insula activation during the anticipation phase of the task.**
+
+
+```{r}
+summary(lm(ins$antlossvnonloss ~ ins$ss.total))
+summary(lm(ins$antlossvnonloss ~ ins$ss.total + ins$Sex))
+summary(lm(ins$antlossvnonloss ~ ins$ss.total + ins$Age.at.scan))
+
+ggplot(ins, aes(x=ss.total, y=antlossvnonloss)) + 
+  geom_point(size=4, color="blue") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), plot.title = element_text(size = 15, hjust=0.5)) + 
+  labs(x = "Social Support", y = "Percent BOLD signal change \n Anticipation of Loss - Nonloss") +
+  ggtitle("Insula Activity \n During Anticipation of Loss>Nonloss \n is Correlated with Social Support") +
+  geom_smooth(method=lm, color="black")
+
+summary(lm(ins$antlossvnonloss ~ ins$ss.total * ins$TotEventsExpUSE, na.action = na.omit))
+summary(lm(ins$antlossvnonloss ~ ins$ss.total * ins$TotNumCategUSE, na.action = na.omit))
+summary(lm(ins$antlossvnonloss ~ ins$ss.total * ins$TotChildSubjRatUSE, na.action = na.omit))
+```
+### However, anticipation of loss relative to nonloss is significantly correlated with social support: greater social support is associated with greater insula activation during the anticipation of loss compared to nonloss (r = .27, p = .046). This effect holds when controlling for gender, but becomes marginal (p = .066) when controlling for age. This same pattern of results was seen in the NAcc.
+
+
+###Outcome
+
+```{r ins cor outcome}
+plot(ins$gain,ins$TotChildSubjRatUSE)
+cor.test(ins$gain, ins$TotEventsExpUSE) #ns
+cor.test(ins$gain, ins$TotNumCategUSE) #ns
+cor.test(ins$gain, ins$TotChildSubjRatUSE) #ns
+
+cor.test(ins$loss, ins$TotEventsExpUSE) #ns
+cor.test(ins$loss, ins$TotNumCategUSE) #ns
+cor.test(ins$loss, ins$TotChildSubjRatUSE) #ns
+
+ins$gainvnongain = ins$gain - ins$nongain
+ins$lossvnonloss = ins$loss - ins$nonloss
+
+cor.test(ins$gainvnongain,ins$TotEventsExpUSE) # r = .31, p = .017
+cor.test(ins$gainvnongain, ins$TotNumCategUSE) # r = .30, p = .02
+cor.test(ins$gainvnongain, ins$TotChildSubjRatUSE) #r = .28, p = .03
+
+cor.test(ins$lossvnonloss,ins$TotEventsExpUSE) #ns
+cor.test(ins$lossvnonloss, ins$TotNumCategUSE) #ns
+cor.test(ins$lossvnonloss, ins$TotChildSubjRatUSE) #ns
+```
+
+### Greater ELS is significantly related to increased activation in bilateral insula during receipt of gains relative to nongain (r = .31, p = .017 for number of stressful events, other factors show similar statistic). Interestingly, the same is not true for the receipt of losses relative to nonloss.
+
+```{r}
+summary(lm(ins$gainvnongain ~ ins$TotEventsExpUSE * ins$ss.total, na.action = na.omit)) #ns
+summary(lm(ins$gainvnongain ~ ins$TotNumCategUSE * ins$Sex)) #significant with all 3 ELS variables - but number of ELS categories is the most significant.
+
+m1 = lm(gainvnongain ~ TotNumCategUSE + Sex + TotNumCategUSE:Sex, data=ins)
+gp = ggplot(data = ins, aes(x=TotNumCategUSE, y = gainvnongain, color=factor(Sex)))
+gp + geom_point(size=4) + stat_smooth(method="lm")
+
+gp2 = ggplot(data = ins, aes(x=TotChildSubjRatUSE, y = gainvnongain, color=Sex))
+gp2 + scale_fill_discrete(name="Gender") +
+  geom_point(size=4) + stat_smooth(method="lm") + 
+  theme(panel.grid.major = element_blank(), plot.title = element_text(size = 30, hjust=0.5)) + 
+  labs(x = " ", y = " ")
+```
+
+### Again, we see a parallel between the NAcc and the insula, where ELS has differential effects during the receipt of gains relative to nongains for males and females.
+
+```{r}
+summary(lm(ins$lossvnonloss ~ ins$TotChildSubjRatUSE * ins$Age.at.scan)) #ns
+summary(lm(ins$lossvnonloss ~ ins$TotChildSubjRatUSE + ins$Age.at.scan)) #ns
+
+summary(lm(ins$lossvnonloss ~ ins$ss.total)) #ns
+summary(lm(ins$lossvnonloss ~ ins$ss.total * ins$TotChildSubjRatUSE)) #ns
+```
+
+
+right insula
+-----------------------
+
+```{r}
+setwd("~/Documents/ELS/KIDMID/Analysis/ROI/58N_maineffect_HOatlas_union")
+ins = read.csv("ant+out_58subs_rightInsula22-Sep-2014.csv")
+
+ins$gainvnongain = ins$gain - ins$nongain
+ins$lossvnonloss = ins$loss - ins$nonloss
+
+gp2 = ggplot(data = ins, aes(x=TotChildSubjRatUSE, y = gainvnongain, color=Sex))
+gp2 + scale_fill_discrete(name="Gender") +
+  geom_point(size=4) + stat_smooth(method="lm") + 
+  theme(panel.grid.major = element_blank(), plot.title = element_text(size = 30, hjust=0.5)) + 
+  labs(x = " ", y = " ")
+
+summary(lm(ins$gainvnongain ~ ins$TotChildSubjRatUSE * ins$Sex))
+rs1 = lm(ins$gainvnongain ~ ins$TotChildSubjRatUSE * ins$Sex)
+summary(lm(ins$gainvnongain ~ ins$TotNumCategUSE * ins$Sex)) #most significant interaction
+summary(lm(ins$gainvnongain ~ ins$TotEventsExpUSE * ins$Sex))
+
+summary(lm(ins$gainvnongain ~ ins$TotChildSubjRatUSE))
+summary(lm(ins$gainvnongain ~ ins$Sex))
+rs2 = lm(ins$gainvnongain ~ ins$TotChildSubjRatUSE)
+anova(rs1,rs2)
+
+summary(lm(ins$lossvnonloss ~ ins$TotChildSubjRatUSE))
+summary(lm(ins$lossvnonloss ~ ins$Sex))
+
+#removing outlier
+boxplot(ins$gainvnongain)
+boxplot(ins$gain)
+boxplot(ins$nongain)
+restricted.ins = subset(ins, ins$gain <= .6)
+boxplot(restricted.ins$gain)
+
+summary(lm(restricted.ins$gainvnongain ~ restricted.ins$TotChildSubjRatUSE * restricted.ins$Sex))
+
+```

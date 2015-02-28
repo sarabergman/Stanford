@@ -1,0 +1,425 @@
+---
+output: html_document
+---
+
+Relations between Neural Reward Regions, ELS, and Social Support
+========================================================
+
+subgenual cingulate, vmPFC (Brodmann's areas 25 and 11)
+-----------------
+
+```{r load in data}
+require(ggplot2)
+setwd("~/Documents/ELS/KIDMID/Analysis/ROI/52N_MSPSS.total")  #sgACC region from ant loss > gain cope 20, zstat 2 
+d = read.csv("anticipation_58subs_sgACC05-Sep-2014.csv") #contains ant PEs (1-4), ELS, MSPSS, age, and gender IVs
+```
+
+```{r image}
+library("png")
+library("grid")
+sgACC = readPNG("~/Documents/ELS/KIDMID/Analysis/ROI/52N_MSPSS.total/sgACC.png")
+  grid.raster(sgACC)
+#<img src="~/Documents/ELS/KIDMID/Analysis/ROI/52N_MSPSS.total/sgACC.png" / >
+#![sgACC]("~/Documents/ELS/KIDMID/Analysis/ROI/52N_MSPSS.total/sgACC.png")
+```
+
+The whole-brain MSPSS analyses excluded subject 17, which is an outlier for social support. Accordingly, I will exclude this participant when calculating the correlation coefficient and plotting the relation between social support and neural activation in sgACC for anticipation of loss > gain.
+```{r }
+#removing ss outlier 
+boxplot(d$ss.total) ## sub 17 is an outlier
+```
+Above shows a boxplot for the social support data - sub 17 is excluded (total social support score = 24) in below analyses.
+
+```{r}
+d1 = d[-c(1,2,3,4,5,14),]
+d1$lossvgain = d1$antloss - d1$antgain #contrast of ant loss > gain
+
+ggplot(d1, aes(x=ss.total, y=lossvgain)) + 
+  geom_point(size=4, color="purple") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), plot.title = element_text(size = 15, hjust=0.5)) + 
+  labs(x = "Social Support", y = "Percent BOLD signal change \n Anticipation of Loss - Gain") +
+  ggtitle("sgACC Activity \n During Anticipation of Loss>Gain \n is Correlated with Social Support") +
+  geom_smooth(method=lm, color="black")
+
+cor1 = cor.test(d1$lossvgain, d1$ss.total)
+cor1
+
+summary(lm(d1$lossvgain ~ d1$ss.total)) # r = .419, p = .002
+summary(lm(d1$lossvgain ~ d1$ss.total + d1$Age.at.scan)) # still holds controlling for age
+summary(lm(d1$lossvgain ~ d1$ss.total + d1$Sex)) #still holds controlling for gender
+summary(lm(d1$antloss ~ d1$ss.total)) # r = .26, p = .06
+summary(lm(d1$antgain ~ d1$ss.total)) # r = .05, p = .725
+```
+**The correlation between activity in this region and social support seems to be strongest when considering the difference between anticipatory activity for gains v losses (r = .419, p = .002). When examining the relation between social support and anticipation of losses > baseline, the correlation is weaker (r = .26, p =.06), and it is non-existent for the anticipation of gains > baseline (r = .05, p = .73). This finding is a little puzzling in light of the below bar graph, which shows that the difference between anticipation of gains and losses is driven by the anticipation of gains.**
+
+```{r}
+#create dataframe to make bargraphs
+anticipation = c(d1$antgain,d1$antloss,d1$antnongain,d1$antnongain)
+condition = c(rep(x = "gain",times = 52), rep(x = "loss", times = 52), rep(x = "nongain", times = 52), rep(x = "nonloss", times = 52))
+brainbar = data.frame(condition,anticipation)
+
+sgACC.summary = data.frame(
+  condition = levels(brainbar$condition),
+  mean = tapply(brainbar$anticipation, brainbar$condition, mean),
+  n = tapply(brainbar$anticipation, brainbar$condition, length),
+  sd = tapply(brainbar$anticipation, brainbar$condition, sd)
+  )
+
+#calculate standard error of the mean 
+sgACC.summary$sem = sgACC.summary$sd/sqrt(sgACC.summary$n) 
+
+#calculate margin of error for CI
+alpha = .05 #95% confidence interval
+sgACC.summary$me = qt(1-alpha/2, df = sgACC.summary$n)*sgACC.summary$sem
+
+#error bars represent 95% CI
+#png('barplot.CI.vSTR.anticipation.png')
+g1.CI = ggplot(sgACC.summary, aes(x = condition, y = mean)) + 
+  geom_bar(position = position_dodge(), stat="identity", fill="purple", width=.5) +
+  geom_errorbar(aes(ymin=mean-me, ymax=mean+me), width=.3) +
+  ggtitle("Anticipatory sgACC Activity / (Error bars represent 95% CI)") + # plot title
+  geom_hline(yintercept=0, linetype = 1) +
+  labs(x = "Anticipation Cue", y = "Percent BOLD signal change") +
+  theme_bw() +
+  #theme_classic()
+  theme(panel.grid.major = element_blank()) # remove x and y major grid lines
+print(g1.CI)
+#dev.off()
+
+#error bars represent standard error of the mean
+g1.SE = ggplot(sgACC.summary, aes(x = condition, y = mean)) + 
+  geom_bar(position = position_dodge(), stat="identity", fill="purple", width=.5) +
+  geom_errorbar(aes(ymin=mean-sem, ymax=mean+sem), width=.3) +
+  labs(x = "Anticipation Condition", y = "Percent BOLD signal change") +
+  ggtitle("Anticipatory sgACC Activity / (Error bars represent SEM)") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank())
+print(g1.SE)
+
+```
+
+```{r removing antgain outliers}
+# boxplot(d1$antloss,d1$antgain)
+# antgain.out = boxplot.stats(d1$antgain, do.out=TRUE)
+# antgain.out$out  #sub 58, 65, 72
+
+# d2 = d1[-c(40, 46, 51),]
+# cor4 = cor.test(d2$lossvgain, d2$ss.total)
+# cor4
+# ggplot(d2, aes(x=ss.total, y=lossvgain)) + 
+#   geom_point(size=4, color="purple") +
+#   theme_bw() +
+#   theme(panel.grid.major = element_blank(), plot.title = element_text(size = 15, hjust=0.5)) + 
+#   labs(x = "Social Support", y = "Percent BOLD signal change \n Anticipation of Loss - Gain") +
+#   ggtitle("sgACC Activity \n During Anticipation of Loss>Gain \n is Correlated with Social Support") +
+#   geom_smooth(method=lm, color="black")
+```
+
+
+```{r t-tests}
+r1 = t.test(d$antgain, d$antloss, paired=TRUE)
+r1
+r2 = t.test(d$antloss, d$antnonloss, paired = TRUE)
+r2
+r3 = t.test(d$antgain, d$antnongain, paired=TRUE)
+r3
+cor1 = cor.test(d$antloss,d$ss.total, na.action=na.omit)
+cor2 = cor.test(d1$antloss,d1$ss.total)
+d$lossvgain = d$antloss - d$antgain
+```
+
+**The relation with social support holds when controlling for ELS. There are no main effects of ELS and there is no interaction between social support and ELS in this region during anticipation.**
+```{r els}
+a = summary(lm(d1$lossvgain ~ d1$ss.total + d1$TotEventsExpUSE))
+b = summary(lm(d1$lossvgain ~ d1$ss.total + d1$TotChildSubjRatUSE))
+c = summary(lm(d1$lossvgain ~ d1$ss.total + d1$TotNumCategUSE)) 
+
+#nothing sig for ant gain or ant loss
+e = summary(lm(d1$antloss ~ d1$ss.total + d1$TotEventsExpUSE)) 
+f = summary(lm(d1$antloss ~ d1$ss.total + d1$TotChildSubjRatUSE))
+g = summary(lm(d1$antloss ~ d1$ss.total + d1$TotNumCategUSE)) 
+
+h = summary(lm(d1$lossvgain ~ d1$ss.total * d1$TotEventsExpUSE))
+i = summary(lm(d1$lossvgain ~ d1$ss.total * d1$TotChildSubjRatUSE))
+j = summary(lm(d1$lossvgain ~ d1$ss.total * d1$TotNumCategUSE)) 
+
+k = summary(lm(d$lossvgain ~ d$TotEventsExpUSE))
+l = summary(lm(d$lossvgain ~ d$TotChildSubjRatUSE))
+m = summary(lm(d$lossvgain ~ d$TotNumCategUSE)) 
+
+n = summary(lm(d$antgain ~ d$TotEventsExpUSE))
+o = summary(lm(d$antgain ~ d$TotChildSubjRatUSE))
+p = summary(lm(d$antgain ~ d$TotNumCategUSE)) 
+
+q = summary(lm(d$antgain ~ d$TotEventsExpUSE))
+r = summary(lm(d$antgain ~ d$TotChildSubjRatUSE))
+s = summary(lm(d$antgain ~ d$TotNumCategUSE)) 
+```
+
+**The relation with social support holds when controlling for age and gender.**
+```{r mspss subscales}
+summary(lm(d1$lossvgain ~ d1$ss.total + d1$Age.at.scan + d1$Sex))
+summary(lm(d1$lossvgain ~ d1$ss.fam + d1$Age.at.scan + d1$Sex))
+summary(lm(d1$lossvgain ~ d1$ss.fam * d1$Age.at.scan + d1$Sex))
+summary(lm(d1$lossvgain ~ d1$ss.fri + d1$Age.at.scan + d1$Sex))
+summary(lm(d1$lossvgain ~ d1$ss.so + d1$Age.at.scan + d1$Sex))  
+```
+
+
+**The following ROIs are defined by taking the conjunction (i.e., multiplying images with fslmaths) of the Harvard-Oxford Structural probabilistic atlas map with the functional activation from the main effect of the task (58 subjects). All striatal clusters (NAcc, putamen, and caudate) were created using the activation from cope 5: anticipation of gain > nongain. The insula was taken from cope 14: the outcome of loss > nonloss. The mPFC was taken from cope 13: outcome of gain > nongain.**
+
+bilateral NAcc
+-----------------
+
+```{r nacc load in data}
+require(ggplot2)
+setwd("~/Documents/ELS/KIDMID/Analysis/ROI/58N_maineffect_HOatlas_union/")  #NAcc - conjuntion of H-O atlas left and right accumbens with cope5 (ant gain > nongain)
+nacc = read.csv("ant+out_58subs_bilateralNAcc09-Sep-2014.csv") #contains ant PEs (1-4), ELS, MSPSS, age, and gender IVs
+```
+
+```{r nacc image}
+library("png")
+library("grid")
+nacc.png = readPNG("~/Documents/ELS/KIDMID/Analysis/ROI/58N_maineffect_HOatlas_union/NAcc.png")
+  grid.raster(nacc.png)
+```
+
+```{r boxplot nacc}
+boxplot(nacc$antgain, nacc$antloss, nacc$antnongain, nacc$antnonloss, nacc$gain, nacc$loss, nacc$nongain, nacc$nonloss, names = c("antgain","antloss","antnongain","antnonloss","gain","loss","nongain","nonloss"), ylab=("percent signal change in bilateral NAcc"), las =2)
+```
+
+```{r nacc bar}
+#create dataframe to make bargraphs
+nacc.pe = c(nacc$antgain,nacc$antloss,nacc$antnongain,nacc$antnongain,nacc$gain, nacc$loss, nacc$nongain, nacc$nonloss)
+condition.2 = c(rep(x = "antgain", times = 58), rep(x = "antloss", times = 58), rep(x = "antnongain", times = 58), rep(x = "antnonloss", times = 58),rep(x = "gain", times = 58), rep(x = "loss", times = 58), rep(x = "nongain", times = 58), rep(x = "nonloss", times = 58))
+naccbar = data.frame(condition.2,nacc.pe)
+
+nacc.summary = data.frame(
+  condition = levels(naccbar$condition.2),
+  mean = tapply(naccbar$nacc.pe, naccbar$condition, mean),
+  n = tapply(naccbar$nacc.pe, naccbar$condition, length),
+  sd = tapply(naccbar$nacc.pe, naccbar$condition, sd)
+  )
+
+#calculate standard error of the mean 
+nacc.summary$sem = nacc.summary$sd/sqrt(nacc.summary$n) 
+
+#calculate margin of error for CI
+alpha = .05 #95% confidence interval
+nacc.summary$me = qt(1-alpha/2, df = nacc.summary$n)*nacc.summary$sem
+
+#error bars represent 95% CI
+#png('barplot.CI.vSTR.anticipation.png')
+g2.CI = ggplot(nacc.summary, aes(x = condition, y = mean)) + 
+  geom_bar(position = position_dodge(), stat="identity", fill="red", width=.5) +
+  geom_errorbar(aes(ymin=mean-me, ymax=mean+me), width=.3) +
+  ggtitle("Reward-Related NACC Activity / (Error bars represent 95% CI)") + # plot title
+  geom_hline(yintercept=0, linetype = 1) +
+  labs(x = "Anticipation and Outcome", y = "Percent BOLD signal change in NAcc") +
+  theme_bw() +
+  #theme_classic()
+  theme(panel.grid.major = element_blank()) # remove x and y major grid lines
+print(g2.CI)
+#dev.off()
+
+#error bars represent standard error of the mean
+g2.SE = ggplot(nacc.summary, aes(x = condition, y = mean)) + 
+  geom_bar(position = position_dodge(), stat="identity", fill="red", width=.5) +
+  geom_errorbar(aes(ymin=mean-sem, ymax=mean+sem), width=.3) +
+  labs(x = "Anticipation and Outcome", y = "Percent BOLD signal change in NAcc") +
+  ggtitle("Reward-Related NACC Activity / (Error bars represent SEM)") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank())
+print(g2.SE)
+```
+
+**Anticipation**
+```{r nacc cor ant}
+cor.test(nacc$antgain, nacc$TotEventsExpUSE) #ns
+cor.test(nacc$antgain, nacc$TotNumCategUSE) #ns
+cor.test(nacc$antgain, nacc$TotChildSubjRatUSE) #ns
+plot(nacc$antgain, nacc$TotEventsExpUSE) # example plot, no relation
+
+cor.test(nacc$antloss, nacc$TotEventsExpUSE) #ns
+cor.test(nacc$antloss, nacc$TotNumCategUSE) #ns
+cor.test(nacc$antloss, nacc$TotChildSubjRatUSE) #ns
+
+nacc$antgainvnongain = nacc$antgain - nacc$antnongain
+nacc$antlossvnonloss = nacc$antloss - nacc$antnonloss
+
+cor.test(nacc$antgainvnongain,nacc$TotEventsExpUSE) #ns
+cor.test(nacc$antgainvnongain, nacc$TotNumCategUSE) #ns
+cor.test(nacc$antgainvnongain, nacc$TotChildSubjRatUSE) #ns
+plot(nacc$antgainvnongain,nacc$TotChildSubjRatUSE)
+
+#summary(lm(nacc$TotChildSubjRatUSE ~ nacc$antgainvnongain)) #same as above
+
+plot(nacc$antlossvnonloss, nacc$TotEventsExpUSE)
+cor.test(nacc$antlossvnonloss,nacc$TotEventsExpUSE) #ns
+cor.test(nacc$antlossvnonloss, nacc$TotNumCategUSE) #ns
+cor.test(nacc$antlossvnonloss, nacc$TotChildSubjRatUSE) #ns
+summary(lm(nacc$antgainvnongain ~ nacc$TotChildSubjRatUSE * nacc$Age.at.scan)) #ns
+summary(lm(nacc$antgainvnongain ~ nacc$TotChildSubjRatUSE * nacc$Sex)) #ns
+```
+
+There is no relation between early life stress and bilateral NAcc activation during the anticipation of gains or losses.
+-------------------
+
+```{r}
+summary(lm(nacc$antgainvnongain ~ nacc$ss.total, na.action = na.omit))
+summary(lm(nacc$antlossvnonloss ~ nacc$ss.total, na.action = na.omit)) # p = .04 
+ggplot(nacc, aes(x=ss.total, y=antlossvnonloss)) + 
+  geom_point(size=4, color="red") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), plot.title = element_text(size = 15, hjust=0.5)) + 
+  labs(x = "Social Support", y = "Percent BOLD signal change \n Anticipation of Loss - Nonloss") +
+  ggtitle("NAcc Activity \n During Anticipation of Loss>Nonloss \n is Correlated with Social Support") +
+  geom_smooth(method=lm, color="black")
+
+summary(lm(nacc$antlossvnonloss ~ nacc$ss.total * nacc$TotEventsExpUSE, na.action = na.omit))
+summary(lm(nacc$antlossvnonloss ~ nacc$ss.total * nacc$TotNumCategUSE, na.action = na.omit))
+summary(lm(nacc$antlossvnonloss ~ nacc$ss.total * nacc$TotChildSubjRatUSE, na.action = na.omit))
+```
+**Anticipation of loss > nonloss in bilateral NAcc is positively correlated with social support (total score; r = .28, p = .04), but there is no interaction with early life stress.**
+
+###Outcome
+
+```{r nacc cor outcome}
+plot(nacc$gain,nacc$TotChildSubjRatUSE)
+cor.test(nacc$gain, nacc$TotEventsExpUSE) #ns
+cor.test(nacc$gain, nacc$TotNumCategUSE) #ns
+cor.test(nacc$gain, nacc$TotChildSubjRatUSE) #ns
+
+cor.test(nacc$loss, nacc$TotEventsExpUSE) #ns
+cor.test(nacc$loss, nacc$TotNumCategUSE) #ns
+cor.test(nacc$loss, nacc$TotChildSubjRatUSE) #ns
+
+nacc$gainvnongain = nacc$gain - nacc$nongain
+nacc$lossvnonloss = nacc$loss - nacc$nonloss
+
+cor.test(nacc$gainvnongain,nacc$TotEventsExpUSE) # p = .087, r = .23
+cor.test(nacc$gainvnongain, nacc$TotNumCategUSE) #ns
+cor.test(nacc$gainvnongain, nacc$TotChildSubjRatUSE) #ns
+
+cor.test(nacc$lossvnonloss,nacc$TotEventsExpUSE) #ns
+cor.test(nacc$lossvnonloss, nacc$TotNumCategUSE) #ns
+cor.test(nacc$lossvnonloss, nacc$TotChildSubjRatUSE) #ns
+
+summary(lm(nacc$gainvnongain ~ nacc$TotEventsExpUSE * nacc$ss.total, na.action = na.omit)) #ns
+summary(lm(nacc$gainvnongain ~ scale(nacc$TotChildSubjRatUSE, center = TRUE) * nacc$Sex)) #significant with all 3 ELS variables - but the Child's subjective report is the most significant.
+
+bilateral.gain = lm(nacc$gain ~ nacc$TotChildSubjRatUSE * nacc$Sex) #ns
+bilateral.nongain = lm(nacc$nongain ~ nacc$TotChildSubjRatUSE * nacc$Sex) #ns
+bilateral = lm(nacc$gainvnongain ~ nacc$TotChildSubjRatUSE * nacc$Sex)
+anova(bilateral)
+
+m1 = lm(gainvnongain ~ TotChildSubjRatUSE + Sex + TotChildSubjRatUSE:Sex, data=nacc)
+gp = ggplot(data = nacc, aes(x=TotChildSubjRatUSE, y = gainvnongain, color=Sex))
+gp + geom_point(size=4) + stat_smooth(method="lm") + theme(panel.grid.major = element_blank(), plot.title = element_text(size = 15, hjust=0.5)) + 
+  labs(x = "Early Life Stress", y = "Percent BOLD signal change \n Outcome of Gain - Nongain") +
+  ggtitle("Bilateral Nucleus Accumbens Activity \n During Outcome of Gain - Nongain \n is Moderated by Gender")
+
+gp2 = ggplot(data = nacc, aes(x=TotChildSubjRatUSE, y = gainvnongain, color=Sex))
+gp2 + scale_fill_discrete(name="Gender") +
+  geom_point(size=4) + stat_smooth(method="lm") + 
+  theme(panel.grid.major = element_blank(), plot.title = element_text(size = 30, hjust=0.5)) + 
+  labs(x = " ", y = " ")
+
+
+restricted.ELS = subset(nacc, nacc$TotChildSubjRatUSE <= 16)
+summary(lm(restricted.ELS$gainvnongain ~ restricted.ELS$TotChildSubjRatUSE * restricted.ELS$Sex))
+
+gp5 = ggplot(data = restricted.ELS, aes(x=TotChildSubjRatUSE, y = gainvnongain, color=Sex))
+gp5 + geom_point(size=4) + stat_smooth(method="lm") + theme(panel.grid.major = element_blank(), plot.title = element_text(size = 15, hjust=0.5)) + 
+  labs(x = "Early Life Stress", y = "Percent BOLD signal change \n Outcome of Gain - Nongain") +
+  ggtitle("Bilateral Nucleus Accumbens Activity \n During Outcome of Gain - Nongain")
+
+```
+
+
+**There is a significant interaction between ELS and gender (37 females, 21 males) in the bilateral NAcc during the receipt of gains compared to nongain. Increased ELS is associated with decreased activation for gain > nongain, but only for males. For females, the pattern of activity is opposite: increased ELS is associated with increased activation, but the effect is weaker than for males.**
+ 
+F(3,54) = 3.62, p = .019.
+The range of ELS scores is restricted for males (0-16).
+
+```{r}
+summary(lm(nacc$lossvnonloss ~ nacc$TotChildSubjRatUSE * nacc$Sex)) #ns
+```
+
+
+right NAcc
+-----------------
+
+**The whole-brain effect of ELS was seen in right striatum.**
+
+```{r}
+setwd("~/Documents/ELS/KIDMID/Analysis/ROI/58N_maineffect_HOatlas_union/")  # right NAcc - conjuntion of H-O atlas right accumbens with cope5 (ant gain > nongain)
+Rnacc = read.csv("ant+out_58subs_rightNAcc15-Sep-2014.csv") #contains ant PEs (1-4), ELS, MSPSS, age, and gender IVs
+
+
+Rnacc$gainvnongain = Rnacc$gain - Rnacc$nongain
+Rnacc$lossvnonloss = Rnacc$loss - Rnacc$nonloss
+
+Rnacc$antgainvnongain = Rnacc$antgain - Rnacc$antnongain
+Rnacc$antlossvnonloss = Rnacc$antloss - Rnacc$antnonloss
+
+summary(lm(Rnacc$gainvnongain ~ Rnacc$TotChildSubjRatUSE * Rnacc$Sex))
+rs1 = lm(Rnacc$gainvnongain ~ Rnacc$TotChildSubjRatUSE * Rnacc$Sex)
+anova(lm(Rnacc$gainvnongain ~ Rnacc$TotChildSubjRatUSE * Rnacc$Sex))
+
+summary(lm(Rnacc$gainvnongain ~ Rnacc$TotChildSubjRatUSE))
+rs2 = lm(Rnacc$gainvnongain ~ Rnacc$TotChildSubjRatUSE)
+summary(lm(Rnacc$gainvnongain ~ Rnacc$Sex))
+rs3 = lm(Rnacc$gainvnongain ~ Rnacc$Sex)
+
+summary(lm(Rnacc$antgainvnongain ~ Rnacc$TotChildSubjRatUSE * Rnacc$Sex)) #ns
+summary(lm(Rnacc$antlossvnonloss ~ Rnacc$TotChildSubjRatUSE * Rnacc$Sex)) #ns
+summary(lm(Rnacc$lossvnonloss ~ Rnacc$TotChildSubjRatUSE * Rnacc$Sex))
+
+gp3 = ggplot(data = Rnacc, aes(x=TotChildSubjRatUSE, y = gainvnongain, color=Sex))
+gp3 + geom_point(size=4) + stat_smooth(method="lm") + theme(panel.grid.major = element_blank(), plot.title = element_text(size = 15, hjust=0.5)) + 
+  labs(x = "Early Life Stress", y = "Percent BOLD signal change \n Outcome of Gain - Nongain") +
+  ggtitle("Right Nucleus Accumbens Activity \n During Outcome of Gain - Nongain \n is Moderated by Gender")
+
+gp3 + geom_point(size=4) + stat_smooth(method="lm") + theme(panel.grid.major = element_blank(), plot.title = element_text(size = 15, hjust=0.5)) +labs(x = " ", y = " ") + ggtitle("Right Nucleus Accumbens Activity \n During Outcome of Gain - Nongain \n is Moderated by Gender")
+
+describeBy(Rnacc$TotChildSubjRatUSE, Lnacc$Sex, mat = TRUE)
+
+restricted.ELS = subset(Rnacc, Rnacc$TotChildSubjRatUSE <= 16)
+summary(lm(restricted.ELS$gainvnongain ~ restricted.ELS$TotChildSubjRatUSE * restricted.ELS$Sex))
+
+```
+
+
+left NAcc
+----------------------
+
+```{r}
+setwd("~/Documents/ELS/KIDMID/Analysis/ROI/58N_maineffect_HOatlas_union/")  # right NAcc - conjuntion of H-O atlas right accumbens with cope5 (ant gain > nongain)
+Lnacc = read.csv("ant+out_58subs_leftNAcc15-Sep-2014.csv") #contains ant PEs (1-4), ELS, MSPSS, age, and gender IVs
+
+
+Lnacc$gainvnongain = Lnacc$gain - Lnacc$nongain
+Lnacc$lossvnonloss = Lnacc$loss - Lnacc$nonloss
+
+a = lm(Lnacc$gainvnongain ~ Lnacc$TotChildSubjRatUSE * Lnacc$Sex)
+b = lm(Lnacc$gainvnongain ~ Lnacc$TotNumCategUSE * Lnacc$Sex)
+c = lm(Lnacc$gainvnongain ~ Lnacc$TotEventsExpUSE * Lnacc$Sex)
+
+
+LnaccSex = describeBy(Lnacc$gainvnongain, Lnacc$Sex, mat = TRUE)
+LnaccSex
+
+gp4 = ggplot(data = Lnacc, aes(x=TotChildSubjRatUSE, y = gainvnongain, color=Sex))
+gp4 + geom_point(size=4) + stat_smooth(method="lm") + theme(panel.grid.major = element_blank(), plot.title = element_text(size = 15, hjust=0.5)) + 
+  labs(x = "Early Life Stress", y = "Percent BOLD signal change \n Outcome of Gain - Nongain") +
+  ggtitle("Left Nucleus Accumbens Activity \n During Outcome of Gain - Nongain \n is Moderated by Gender")
+
+
+
+```
+
+

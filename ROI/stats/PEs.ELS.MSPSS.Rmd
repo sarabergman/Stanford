@@ -1,0 +1,646 @@
+Relations between Neural Reward Regions, ELS, and Social Support
+========================================================
+
+```{r load in data}
+setwd("~/Documents/STANFORD/FYP/KIDMID/Analysis/ROI/33N_ELS")
+d = read.csv("33N_PEs.4.29.14.csv")
+d.no.outlier = d[-14,]
+```
+
+Ventral striatum
+-----------------
+
+### Main effect of task. Percent BOLD signal change in ventral striatum for all conditions.
+
+```{r}
+#n=33
+
+ant = read.csv("anticipation.bargraphs.csv") #parameter estimates
+ant.copes = read.csv("anticipation.copes.bargraphs.csv")  #contrast of parameter estimates
+
+#calculate summary statistics for each condition in VSTR
+vSTR.summary.pe = data.frame(
+  condition = levels(ant$condition),
+  mean = tapply(ant$vSTR, ant$condition, mean),
+  n = tapply(ant$vSTR, ant$condition, length),
+  sd = tapply(ant$vSTR, ant$condition, sd)
+  )
+
+vSTR.summary.copes = data.frame(
+  condition = levels(ant.copes$condition),
+  mean = tapply(ant.copes$vSTR, ant.copes$condition, mean),
+  n = tapply(ant.copes$vSTR, ant.copes$condition, length),
+  sd = tapply(ant.copes$vSTR, ant.copes$condition, sd) 
+  )
+
+vSTR.summary = rbind(vSTR.summary.pe, vSTR.summary.copes)
+
+#calculate standard error of the mean 
+vSTR.summary$sem = vSTR.summary$sd/sqrt(vSTR.summary$n) 
+
+#calculate margin of error for CI
+alpha = .05 #95% confidence interval
+vSTR.summary$me = qt(1-alpha/2, df = vSTR.summary$n)*vSTR.summary$sem
+
+require(ggplot2)
+#geom_bar(mapping = NULL, data = NULL, stat = "bin", position = "stack", ...)
+
+#error bars represent 95% CI
+#png('barplot.CI.vSTR.anticipation.png')
+g1.CI = ggplot(vSTR.summary, aes(x = condition, y = mean)) + 
+  geom_bar(position = position_dodge(), stat="identity", fill="orange", width=.5) +
+  geom_errorbar(aes(ymin=mean-me, ymax=mean+me), width=.3) +
+  ggtitle("Anticipatory Ventral Striatum Activity") + # plot title
+  geom_hline(yintercept=0, linetype = 1) +
+  labs(x = "Anticipation Cue", y = "Percent BOLD signal change") +
+  theme_bw() +
+  #theme_classic()
+  theme(panel.grid.major = element_blank()) # remove x and y major grid lines
+print(g1.CI)
+#dev.off()
+
+#error bars represent standard error of the mean
+g1.SE = ggplot(vSTR.summary, aes(x = condition, y = mean)) + 
+  geom_bar(position = position_dodge(), stat="identity", fill="orange", width=.5) +
+  geom_errorbar(aes(ymin=mean-sem, ymax=mean+sem), width=.3) +
+  labs(x = "Anticipation Condition", y = "Percent BOLD signal change") +
+  ggtitle("Anticipatory Ventral Striatum Activity") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank())
+print(g1.SE)
+
+
+
+#one-way ANOVA
+r1 = anova(lm(vSTR ~ condition, data=ant))  #F(3) = 4.09, p = .008
+
+#paired t-tests
+r2 = t.test(d$vSTR.antgain, d$vSTR.antloss, paired=TRUE) #t(32) = 3.96, p = .0004
+r3 = t.test(d$vSTR.antgain, d$vSTR.antnongain, paired=TRUE) #t(32) = 4.38, p = .0001
+r4 = t.test(d$vSTR.antgain, d$vSTR.antnonloss, paired=TRUE) #t(32) = 6.62, p < .0001
+r5 = t.test(d$vSTR.antloss, d$vSTR.antnonloss, paired = TRUE) #t(32) = 3.30, p = .002
+```
+
+
+
+### ELS
+```{r looking for correlations between events and vSTR activity}
+#cluster from anticipation of loss > nonloss, main effect
+r1 = lm(vSTR.antgain ~ events, d)
+r2 = lm(vSTR.antnongain ~ events, d)
+r3 = lm(vSTR.antloss ~ events, d)
+r4 = lm(vSTR.antnonloss ~ events, d)
+
+r1 = lm(vSTR.antg.ng ~ events, d)
+r2 = lm(vSTR.antg.l ~ events, d)
+r3 = lm(vSTR.antl.nl ~ events, d)
+r4 = lm(vSTR.antl.g ~ events, d)
+
+```
+Total stressful events does not predict ventral striatal activity in any of the 4 anticipation conditions.
+
+```{r looking for correlations between categs and vSTR activity}
+#cluster from anticipation of loss > nonloss, main effect
+r1 = lm(vSTR.antgain ~ categs, d)
+r2 = lm(vSTR.antnongain ~ categs, d)
+r3 = lm(vSTR.antloss ~ categs, d)
+r4 = lm(vSTR.antnonloss ~ categs, d)
+
+r1 = lm(vSTR.antg.ng ~ categs, d)
+r2 = lm(vSTR.antg.l ~ categs, d)
+r3 = lm(vSTR.antl.nl ~ categs, d)
+r4 = lm(vSTR.antl.g ~ categs, d)
+```
+Total categories does not predict ventral striatal activity in any of the 4 anticipation conditions.
+
+```{r looking for correlations between subj and vSTR activity}
+#cluster from anticipation of loss > nonloss, main effect
+r1 = lm(vSTR.antgain ~ subjeval, d)
+r2 = lm(vSTR.antnongain ~ subjeval, d)  # p = .07
+r3 = lm(vSTR.antloss ~ subjeval, d)
+r4 = lm(vSTR.antnonloss ~ subjeval, d)
+
+r1 = lm(vSTR.antg.ng ~ subjeval, d)
+r2 = lm(vSTR.antg.l ~ subjeval, d)
+r3 = lm(vSTR.antl.nl ~ subjeval, d)
+r4 = lm(vSTR.antl.g ~ subjeval, d)
+```
+Subj ELS score does not predict ventral striatal activity in any of the 4 anticipation conditions, although the relation was marginal (p=.07) for the anticipation of nongain.
+
+
+### MSPSS 
+```{r looking for correlations between social support and vSTR activity}
+#cluster from anticipation of loss > nonloss, main effect
+
+cor1 = cor.test(d.no.outlier$vSTR.antloss,d.no.outlier$ss, na.action=na.omit) #r = .45, p = .02
+cor1.2 = cor.test(d$vSTR.antloss,d$ss, na.action=na.omit) #r = .52, p = .005
+cor2 = cor.test(d.no.outlier$vSTR.antloss,d.no.outlier$family, na.action=na.omit) #r = .33, p = .08
+cor3 = cor.test(d.no.outlier$vSTR.antloss,d.no.outlier$friends, na.action=na.omit) #r = .52, p = .005
+cor4 = cor.test(d.no.outlier$vSTR.antloss,d.no.outlier$so, na.action=na.omit) #r = .24, p = .23
+
+cor1 = cor.test(d.no.outlier$vSTR.antg.ng,d.no.outlier$ss, na.action=na.omit) # p > .1
+cor2 = cor.test(d.no.outlier$vSTR.antg.l,d.no.outlier$ss, na.action=na.omit) #r = -.36, p = .06
+cor3 = cor.test(d.no.outlier$vSTR.antl.nl,d.no.outlier$ss, na.action=na.omit) #r = .38, p = .05
+cor3.2 = cor.test(d$vSTR.antl.nl,d$ss, na.action=na.omit) #r = .32, p = .1
+cor4 = cor.test(d.no.outlier$vSTR.antl.g,d.no.outlier$ss, na.action=na.omit) #r = .36, p = .06
+
+
+qplot(ss, vSTR.antloss, data=d)
+qplot(ss, vSTR.antloss, data=d.no.outlier)
+
+r1 = lm(vSTR.antgain ~ ss, d, na.action=na.omit)  #doesnt matter if you use this or not
+r2 = lm(vSTR.antnongain ~ ss, d, na.action=na.omit) # p=.03, r = .41
+r3 = lm(vSTR.antloss ~ ss, d) # p=.005, r = .52
+r4 = lm(vSTR.antnonloss ~ ss, d)
+
+ggplot(d.no.outlier, aes(x=ss, y=vSTR.antl.nl)) + 
+  geom_point(size=4, color="orange") +
+  theme(panel.grid.major = element_blank(), plot.title = element_text(size = 15, hjust=0.5)) + 
+  labs(x = "Social Support", y = "Percent BOLD signal change \n Anticipation of Loss>Nonloss") +
+  ggtitle("Ventral Striatum Activity \n During Anticipation of Loss>Nonloss \n is Correlated with Social Support") +
+  geom_smooth(method=lm, color="black")
+
+##make axes labeles bolder?
+
+```
+Total social support score is positively associated with ventral striatal activity during the anticipation of nongain(r = .4, p = .03) and the anticipation of loss (r = .52, p = .005).
+
+```{r looking for correlations between family social support and vSTR activity}
+#cluster from anticipation of loss > nonloss, main effect
+r1 = lm(vSTR.antgain ~ family, d)  #doesnt matter if you use this or not
+r2 = lm(vSTR.antnongain ~ family, d) 
+r3 = lm(vSTR.antloss ~ family, d) # p = .02, r = .43
+r3.2 = lm(vSTR.antloss ~ family, d.no.outlier) #p = .08, r = .34
+
+r4 = lm(vSTR.antnonloss ~ family, d)
+
+r1 = lm(vSTR.antg.ng ~ family, d.no.outlier)  
+r2 = lm(vSTR.antg.l ~ family, d.no.outlier) 
+r3 = lm(vSTR.antl.nl ~ family, d.no.outlier) # r = .39, p = .04
+r3.2 = lm(vSTR.antl.nl ~ family, d)  #r = .33, p = .09
+r4 = lm(vSTR.antl.g ~ family, d.no.outlier)
+
+
+ggplot(d.no.outlier, aes(x=family, y=vSTR.antl.nl)) + 
+  geom_point(size=4, color="blue") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), plot.title = element_text(size = 15, hjust=0.5)) + 
+  labs(x = "Family Social Support", y = "Percent BOLD signal change \n Anticipation of Loss>Nonloss") +
+  ggtitle("Ventral Striatum Activity \n During Anticipation of Loss>Nonloss \n is Correlated with Family Social Support") +
+  geom_smooth(method=lm, color="black")
+
+
+```
+Family social support score is positively associated with ventral striatal activity during the anticipation of loss (r = .43, p = .02).
+
+```{r looking for correlations between friend social support and vSTR activity}
+#cluster from anticipation of loss > nonloss, main effect
+r1 = lm(vSTR.antgain ~ friends, d.no.outlier, na.action=na.omit) # p = .3, p = .7 without outlier
+r2 = lm(vSTR.antnongain ~ friends, d, na.action=na.omit) #p = .014, r = .46
+r3 = lm(vSTR.antloss ~ friends, d) #p = .001, r = .58
+r3.2 = lm(vSTR.antloss ~ friends, d.no.outlier) #r = .52, p = .005
+r4 = lm(vSTR.antnonloss ~ friends, d) #p = .08, r = .33
+
+
+r1 = lm(vSTR.antg.ng ~ friends, d.no.outlier) # p = .04, r = -.40
+r1.2 = lm(vSTR.antg.ng ~ friends, d) # p = .07, r = .35
+r2 = lm(vSTR.antg.l ~ friends, d.no.outlier) # p = .01, r = -.47
+r2.2 = lm(vSTR.antg.l ~ friends, d) # p = .03, r = .41
+
+r3 = lm(vSTR.antl.nl ~ friends, d.no.outlier) # p = .2
+r3.2 = lm(vSTR.antl.nl ~ friends, d) # p = .2
+r4 = lm(vSTR.antl.g ~ friends, d.no.outlier) # r = .47, p = .01
+r4.2 = lm(vSTR.antl.g ~ friends, d) # r = .41, p = .03
+
+ggplot(d.no.outlier, aes(x=friends, y=vSTR.antg.ng)) + 
+  geom_point(size=4, color="green") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), plot.title = element_text(size = 15, hjust=0.5)) + 
+  labs(x = "Friend Social Support", y = "Percent BOLD signal change \n Anticipation of Gain>Nongain") +
+  ggtitle("Ventral Striatum Activity \n During Anticipation of Gain>Nongain \n is negatively correlated with Friend Social Support") +
+  geom_smooth(method=lm, color="black")
+
+```
+Friend social support is positively associated with ventral striatal activity during the anticipation of nongain (r = .46, p = .014), loss (r = .58, p = .001), and nonloss (marginally, r = .33, p = .08).
+
+```{r looking for correlations between sig other social support and vSTR activity}
+#cluster from anticipation of loss > nonloss, main effect
+r1 = lm(vSTR.antgain ~ so, d)  
+r2 = lm(vSTR.antnongain ~ so, d) 
+r3 = lm(vSTR.antloss ~ so, d) # p = .075, r = .34
+r3.2 = lm(vSTR.antloss ~ so, d.no.outlier) #p = .2
+r4 = lm(vSTR.antnonloss ~ so, d) 
+
+r1 = lm(vSTR.antg.ng ~ so, d.no.outlier)  # p = .4
+r2 = lm(vSTR.antg.l ~ so, d.no.outlier)  # p = .4
+r3 = lm(vSTR.antl.nl ~ so, d.no.outlier) # p = .1
+r3.2 = lm(vSTR.antl.nl ~ so, d)  # p = .18
+r4 = lm(vSTR.antl.g ~ so, d.no.outlier) # p = .4
+```
+Significant other social support is marginally positively associated with ventral striatal activity during the anticipation of loss (p = .075).
+
+### Interactions between ELS and SS
+**vSTR**
+```{r}
+r1 = with(d, lm(vSTR.antgain ~ events * ss))
+r2 = with(d, lm(vSTR.antloss ~ categs * ss))
+r3 = with(d, lm(vSTR.antloss ~ subjeval * ss))
+r4 = with(d, lm(vSTR.antloss ~ events * friends)) #sig main effect of friends p=.03
+r5 = with(d, lm(vSTR.antloss ~ categs * friends)) #marginal main effect of friends p=.06
+r6 = with(d, lm(vSTR.antloss ~ subjeval * friends)) #sig main effect of friends p=.02
+r7 = with(d, lm(vSTR.antloss ~ events * so)) 
+r8 = with(d, lm(vSTR.antloss ~ categs * so)) 
+r9 = with(d, lm(vSTR.antloss ~ subjeval * so))
+summary(lm(d$vSTR.antloss ~ d$friends + d$events + d$categs + d$subjeval))
+
+r1 = with(d.no.outlier, lm(vSTR.antg.l ~ events * ss))
+r2 = with(d.no.outlier, lm(vSTR.antg.l ~ categs * ss))
+r3 = with(d.no.outlier, lm(vSTR.antg.l ~ subjeval * ss))
+r4 = with(d.no.outlier, lm(vSTR.antg.l ~ events * friends))
+r5 = with(d.no.outlier, lm(vSTR.antg.l ~ categs * friends)) 
+r6 = with(d.no.outlier, lm(vSTR.antg.l ~ subjeval * friends)) #marginal main effect of friends
+r7 = with(d.no.outlier, lm(vSTR.antg.l ~ events * so)) 
+r8 = with(d.no.outlier, lm(vSTR.antg.l ~ categs * so)) 
+r9 = with(d.no.outlier, lm(vSTR.antg.l ~ subjeval * so))
+
+r1 = with(d.no.outlier, lm(vSTR.antg.ng ~ events * ss))
+r2 = with(d.no.outlier, lm(vSTR.antg.ng ~ categs * ss))
+r3 = with(d.no.outlier, lm(vSTR.antg.ng ~ subjeval * ss))
+r4 = with(d.no.outlier, lm(vSTR.antg.ng ~ events * friends))
+r5 = with(d.no.outlier, lm(vSTR.antg.ng ~ categs * friends)) 
+r6 = with(d.no.outlier, lm(vSTR.antg.ng ~ subjeval * friends)) 
+r7 = with(d.no.outlier, lm(vSTR.antg.ng ~ events * so)) 
+r8 = with(d.no.outlier, lm(vSTR.antg.ng ~ categs * so)) 
+r9 = with(d.no.outlier, lm(vSTR.antg.ng ~ subjeval * so))
+
+```
+
+It looks like these interaction models are significant ps < .05, but none of the main effects or interactions are significant. The only exception is with the main effect of friend support, but there is no interaction with ELS. The relation holds after controlling for all the els variables.
+
+vmPFC
+-----------
+
+```{r}
+r1 = with(d, lm(vmPFC.loss ~ events * ss))
+r2 = with(d, lm(vmPFC.loss ~ categs * ss))
+r3 = with(d, lm(vmPFC.loss ~ subjeval * ss))
+r4 = with(d, lm(vmPFC.loss ~ events * friends))
+r5 = with(d, lm(vmPFC.loss ~ categs * friends)) 
+r6 = with(d, lm(vmPFC.loss ~ subjeval * friends)) 
+r7 = with(d, lm(vmPFC.loss ~ events * so)) 
+r8 = with(d, lm(vmPFC.loss ~ categs * so)) 
+r9 = with(d, lm(vmPFC.loss ~ subjeval * so))
+summary(lm(d$vmPFC.loss ~ d$friends + d$events + d$categs + d$subjeval))
+```
+
+```{r}
+cor1 = cor.test(d$vmPFC.loss,d$ss, na.action=na.omit) #r=.44, p =.02
+cor2 = cor.test(d$vmPFC.loss,d$family, na.action=na.omit) #r=.33, p=.09
+cor3 = cor.test(d$vmPFC.loss,d$friends, na.action=na.omit) #r=.44, p=.02
+cor4 = cor.test(d$vmPFC.loss,d$so, na.action=na.omit) #r=.37, p=.05
+
+cor1 = cor.test(d$vmPFC.antgain,d$ss, na.action=na.omit) #r=.32, p=.09
+cor2 = cor.test(d$vmPFC.antgain,d$family, na.action=na.omit) 
+cor3 = cor.test(d$vmPFC.antgain,d$friends, na.action=na.omit) 
+cor4 = cor.test(d$vmPFC.antgain,d$so, na.action=na.omit) 
+
+cor1 = cor.test(d$vmPFC.antgain,d$events)
+cor2 = cor.test(d$vmPFC.antgain,d$categs)
+cor3 = cor.test(d$vmPFC.antgain,d$subjeval)
+```
+vmPFC during anticipation of loss is correlated with total and friend social support.
+
+Subgenual cingulate (vmPFC), NAcc
+------------------------------------
+
+```{r}
+#correlation scatterplot
+cor1 = cor.test(d.no.outlier$Nacc.mPFC.antloss,d.no.outlier$ss, na.action=na.omit) #r=.62, p = .0005  #with sub 17 r=.53, p=.004
+
+cor2 = cor.test(d.no.outlier$Nacc.mPFC.antloss,d.no.outlier$family, na.action=na.omit) #r = .45 p = .018
+cor3 = cor.test(d.no.outlier$Nacc.mPFC.antloss,d.no.outlier$friends, na.action=na.omit) #r = .52, p=.005
+cor4 = cor.test(d.no.outlier$Nacc.mPFC.antloss,d.no.outlier$so, na.action=na.omit) #r=.56, p=.002
+
+require(ggplot2)
+
+#qplot(x, y, data=, colour=I("red"))
+#qplot(x, y, data=, colour=factor(els))
+
+
+ggplot(d.no.outlier, aes(x=ss, y=Nacc.mPFC.antloss)) + 
+  geom_point(size=4, color="orange") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), plot.title = element_text(size = 15, hjust=0.5)) + 
+  labs(x = "Social Support", y = "Percent BOLD signal change") +
+  ggtitle("Subgenual Cingulate Activity \n During Anticipation of Loss \n is Correlated with Social Support") +
+  geom_smooth(method=lm, color="black")
+
+```
+the NAcc-vmPFC cluster during ant loss is positively correlated with social support.
+
+```{r}
+cor1 = cor.test(d.no.outlier$Nacc.mPFC.antgain,d.no.outlier$ss, na.action=na.omit) #r = .26, p = .19
+cor2 = cor.test(d.no.outlier$Nacc.mPFC.antgain,d.no.outlier$family, na.action=na.omit) #r = .10, p = .63
+cor3 = cor.test(d.no.outlier$Nacc.mPFC.antgain,d.no.outlier$friends, na.action=na.omit) #r = .23, p = .25
+cor4 = cor.test(d.no.outlier$Nacc.mPFC.antgain,d.no.outlier$so, na.action=na.omit) #r = .31, p = .12
+
+```
+
+### Examining sgACC (vmPFC-NAcc) copes and social support and ELS.
+
+```{r}
+r1 = lm(vmPFC.Nacc.antg.ng ~ events, d)
+r2 = lm(vmPFC.Nacc.antg.l ~ events, d)
+r3 = lm(vmPFC.Nacc.antl.nl ~ events, d)
+r4 = lm(vmPFC.Nacc.antl.g ~ events, d)
+r5 = lm(Nacc.mPFC.antgain ~ events, d)
+r6 = lm(Nacc.mPFC.antloss ~ events, d)
+#nothing
+
+r1 = lm(vmPFC.Nacc.antg.ng ~ categs, d)
+r2 = lm(vmPFC.Nacc.antg.l ~ categs, d)
+r3 = lm(vmPFC.Nacc.antl.nl ~ categs, d)
+r4 = lm(vmPFC.Nacc.antl.g ~ categs, d)
+r5 = lm(Nacc.mPFC.antgain ~ categs, d)
+r6 = lm(Nacc.mPFC.antloss ~ categs, d)
+#nothing
+
+r1 = lm(vmPFC.Nacc.antg.ng ~ subjeval, d)
+r2 = lm(vmPFC.Nacc.antg.l ~ subjeval, d)
+r3 = lm(vmPFC.Nacc.antl.nl ~ subjeval, d)
+r4 = lm(vmPFC.Nacc.antl.g ~ subjeval, d)
+r5 = lm(Nacc.mPFC.antgain ~ subjeval, d)
+r6 = lm(Nacc.mPFC.antloss ~ subjeval, d)
+#nothing
+
+r1 = lm(vmPFC.Nacc.antg.ng ~ ss, d) #ns
+r1.2 = lm(vmPFC.Nacc.antg.ng ~ ss, d.no.outlier) #p = .23
+r2 = lm(vmPFC.Nacc.antg.l ~ ss, d) #r = -.37, p = .05
+r2.2 = lm(vmPFC.Nacc.antg.l ~ ss, d.no.outlier) #r = -.67, p = .0001
+r3 = lm(vmPFC.Nacc.antl.nl ~ ss, d) #p = .13
+r3.2 = lm(vmPFC.Nacc.antl.nl ~ ss, d.no.outlier) #r = .48, p = .01
+r4 = lm(vmPFC.Nacc.antl.g ~ ss, d) # r = .37, p = .06
+r4.2 = lm(vmPFC.Nacc.antl.g ~ ss, d.no.outlier) # r = .67, p = .0001  same as g>l, opposite direction
+r5 = lm(Nacc.mPFC.antgain ~ ss, d) #r = .36, p = .06
+r5.2 = lm(Nacc.mPFC.antgain ~ ss, d.no.outlier) #p = .19
+r6 = lm(Nacc.mPFC.antloss ~ ss, d) #r = .53, p = .004
+r6.2 = lm(Nacc.mPFC.antloss ~ ss, d.no.outlier) #r = .62,  p = .0005
+#greater sgACC during loss is associated with more social support. the contrast this region came from was loss>gain, effect driven by loss not gain, as the effect of gain is uncorrelated with ss (outlier removed)
+
+r1 = lm(vmPFC.Nacc.antg.ng ~ family, d.no.outlier)
+r2 = lm(vmPFC.Nacc.antg.l ~ family, d.no.outlier) # r = -.61, p = .0008
+r3 = lm(vmPFC.Nacc.antl.nl ~ family, d.no.outlier) #r = .38, p = .05
+r4 = lm(vmPFC.Nacc.antl.g ~ family, d.no.outlier) #r = .61, p = .0008 same as g>l, opposite direction
+r5 = lm(Nacc.mPFC.antgain ~ family, d.no.outlier)
+r6 = lm(Nacc.mPFC.antloss ~ family, d.no.outlier) #r = .45, p = .02
+#greater sgACC during loss is associated with more family social support.
+
+r1 = lm(vmPFC.Nacc.antg.ng ~ friends, d.no.outlier)
+r2 = lm(vmPFC.Nacc.antg.l ~ friends, d.no.outlier) # r = -.53, p = .005
+r3 = lm(vmPFC.Nacc.antl.nl ~ friends, d.no.outlier) #r = .36, p = .06
+r4 = lm(vmPFC.Nacc.antl.g ~ friends, d.no.outlier) #r = .53, p = .005
+r5 = lm(Nacc.mPFC.antgain ~ friends, d.no.outlier)
+r6 = lm(Nacc.mPFC.antloss ~ friends, d.no.outlier) #r = .52, p = .005
+#greater sgACC during loss is associated with more family social support.
+
+r1 = lm(vmPFC.Nacc.antg.ng ~ so, d.no.outlier)
+r2 = lm(vmPFC.Nacc.antg.l ~ so, d.no.outlier) #r = -.52, p = .006
+r3 = lm(vmPFC.Nacc.antl.nl ~ so, d.no.outlier) #r = .44, p = .02
+r4 = lm(vmPFC.Nacc.antl.g ~ so, d.no.outlier) #r = .52, p = .006
+r5 = lm(Nacc.mPFC.antgain ~ so, d.no.outlier)
+r6 = lm(Nacc.mPFC.antloss ~ so, d.no.outlier) #r =  .56, p = .002
+#greater sgACC during loss is associated with more family social support.
+```
+
+
+### Plotting main effect of task in subgenual cingulate - NAcc.
+
+Remember, the positive correlation of this region for anticipation of loss > gain with social support was found with N = 27. Another way to think about it is, negative correlation of social support with this region for anticipation of gain > loss.
+```{r}
+#calculate summary statistics for each condition
+sgACC.summary.pe = data.frame(
+  condition = levels(ant$condition),
+  mean = tapply(ant$vmPFC.Nacc, ant$condition, mean),
+  n = tapply(ant$vmPFC.Nacc, ant$condition, length),
+  sd = tapply(ant$vmPFC.Nacc, ant$condition, sd)
+  )
+
+sgACC.summary.copes = data.frame(
+  condition = levels(ant.copes$condition),
+  mean = tapply(ant.copes$vmPFC.Nacc, ant.copes$condition, mean),
+  n = tapply(ant.copes$vmPFC.Nacc, ant.copes$condition, length),
+  sd = tapply(ant.copes$vmPFC.Nacc, ant.copes$condition, sd)
+  )
+
+sgACC.summary = rbind(sgACC.summary.pe, sgACC.summary.copes)
+
+#calculate standard error of the mean 
+sgACC.summary$sem = sgACC.summary$sd/sqrt(sgACC.summary$n) 
+
+#calculate margin of error for CI
+alpha = .05 #95% confidence interval
+sgACC.summary$me = qt(1-alpha/2, df = sgACC.summary$n)*sgACC.summary$sem
+
+require(ggplot2)
+#geom_bar(mapping = NULL, data = NULL, stat = "bin", position = "stack", ...)
+
+#error bars represent 95% CI
+#png('barplot.CI.vSTR.anticipation.png')
+g2.CI = ggplot(sgACC.summary, aes(x = condition, y = mean)) + 
+  geom_bar(position = position_dodge(), stat="identity", fill="red", width=.5) +
+  geom_errorbar(aes(ymin=mean-me, ymax=mean+me), width=.5) +
+  ggtitle("Anticipatory Subgenual Cingulate Activity") + # plot title
+  geom_hline(yintercept=0, linetype = 1) +
+  labs(x = "Anticipation Cue", y = "Percent BOLD signal change") +
+  theme_bw() +
+  #theme_classic()
+  theme(panel.grid.major = element_blank()) # remove x and y major grid lines
+#print(g2.CI)
+#dev.off()
+
+#error bars represent standard error of the mean
+g2.SE = ggplot(sgACC.summary, aes(x = condition, y = mean)) + 
+  geom_bar(position = position_dodge(), stat="identity", fill="red", width=.5) +
+  geom_errorbar(aes(ymin=mean-sem, ymax=mean+sem), width=.3) +
+  labs(x = "Anticipation Condition", y = "Percent BOLD signal change") +
+  ggtitle("Anticipatory Subgenual Cingulate Activity") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank())
+print(g2.SE)
+```
+
+
+Outcome 
+-------------------
+
+### MPFC 
+```{r}
+cor1 = cor.test(d.no.outlier$mPFC.gain,d.no.outlier$ss, na.action=na.omit) 
+cor2 = cor.test(d.no.outlier$mPFC.gain,d.no.outlier$family, na.action=na.omit) 
+cor3 = cor.test(d.no.outlier$mPFC.gain,d.no.outlier$friends, na.action=na.omit) 
+cor4 = cor.test(d.no.outlier$mPFC.gain,d.no.outlier$so, na.action=na.omit) 
+#nothing
+cor1 = cor.test(d.no.outlier$mPFC.loss,d.no.outlier$ss, na.action=na.omit) 
+cor2 = cor.test(d.no.outlier$mPFC.loss,d.no.outlier$family, na.action=na.omit) 
+cor3 = cor.test(d.no.outlier$mPFC.loss,d.no.outlier$friends, na.action=na.omit) 
+cor4 = cor.test(d.no.outlier$mPFC.loss,d.no.outlier$so, na.action=na.omit) 
+#nothing
+
+
+cor5 = cor.test(d$mPFC.gain,d$events)
+cor6 = cor.test(d$mPFC.gain,d$categs)
+cor7 = cor.test(d$mPFC.gain,d$subjeval)
+
+cor8 = cor.test(d$mPFC.loss,d$events)
+cor9 = cor.test(d$mPFC.loss,d$categs)
+cor10 = cor.test(d$mPFC.loss,d$subjeval)
+#nothing
+
+#linear regressions
+r1 = with(d, lm(mPFC.gain ~ events * ss))
+r2 = with(d, lm(mPFC.gain ~ categs * ss))
+r3 = with(d, lm(mPFC.gain ~ subjeval * ss))
+r4 = with(d, lm(mPFC.gain ~ events * friends))
+r5 = with(d, lm(mPFC.gain ~ categs * friends)) 
+r6 = with(d, lm(mPFC.gain ~ subjeval * friends)) 
+r7 = with(d, lm(mPFC.gain ~ events * so)) 
+r8 = with(d, lm(mPFC.gain ~ categs * so)) 
+r9 = with(d, lm(mPFC.gain ~ subjeval * so))
+summary(lm(d$mPFC.gain ~ d$friends + d$events + d$categs + d$subjeval))
+
+#quadratic models
+r1 = with(d.no.outlier, lm(mPFC.gain ~ poly(subjeval,2) * family))
+r2 = with(d.no.outlier, lm(mPFC.gain ~ poly(subjeval,2) * friends))
+r3 = with(d.no.outlier, lm(mPFC.gain ~ poly(subjeval,2) * so))
+r4 = with(d.no.outlier, lm(mPFC.gain ~ poly(subjeval,2) * ss))
+r5 = with(d.no.outlier, lm(mPFC.gain ~ poly(events,2) * ss))
+r6 = with(d.no.outlier, lm(mPFC.gain ~ poly(events,2) * friends))
+r7 = with(d.no.outlier, lm(mPFC.gain ~ poly(events,2) * family))
+r8 = with(d.no.outlier, lm(mPFC.gain ~ poly(events,2) * so))
+#nothing!!!!
+```
+
+### ACC
+
+```{r}
+#social support correlations
+cor1 = cor.test(d.no.outlier$ACC.gain,d.no.outlier$ss, na.action=na.omit) 
+cor2 = cor.test(d.no.outlier$ACC.gain,d.no.outlier$family, na.action=na.omit) 
+cor3 = cor.test(d.no.outlier$ACC.gain,d.no.outlier$friends, na.action=na.omit) 
+cor4 = cor.test(d.no.outlier$ACC.gain,d.no.outlier$so, na.action=na.omit)
+
+cor1 = cor.test(d.no.outlier$ACC.loss,d.no.outlier$ss, na.action=na.omit) 
+cor2 = cor.test(d.no.outlier$ACC.loss,d.no.outlier$family, na.action=na.omit) 
+cor3 = cor.test(d.no.outlier$ACC.loss,d.no.outlier$friends, na.action=na.omit) 
+cor4 = cor.test(d.no.outlier$ACC.loss,d.no.outlier$so, na.action=na.omit) 
+#nothing
+
+#ELS correlations
+cor5 = cor.test(d$ACC.gain,d$events)
+cor6 = cor.test(d$ACC.gain,d$categs)
+cor7 = cor.test(d$ACC.gain,d$subjeval)
+
+cor8 = cor.test(d$ACC.loss,d$events)
+cor9 = cor.test(d$ACC.loss,d$categs)
+cor10 = cor.test(d$ACC.loss,d$subjeval)
+
+#linear regressions
+r1 = with(d, lm(ACC.loss ~ events * ss))
+r2 = with(d, lm(ACC.loss ~ categs * ss))
+r3 = with(d, lm(ACC.loss ~ subjeval * ss)) #main effect ss p = .048, interaction p = .056
+r4 = with(d, lm(ACC.loss ~ events * friends))
+r5 = with(d, lm(ACC.loss ~ categs * friends)) 
+r6 = with(d, lm(ACC.loss ~ subjeval * friends)) 
+r7 = with(d, lm(ACC.loss ~ events * so)) 
+r8 = with(d, lm(ACC.loss ~ categs * so)) 
+r9 = with(d, lm(ACC.loss ~ subjeval * so))
+summary(lm(d$ACC.loss ~ d$friends + d$events + d$categs + d$subjeval))
+````
+
+### R insula
+
+```{r}
+#social support correlations
+cor1 = cor.test(d.no.outlier$Rins.gain,d.no.outlier$ss, na.action=na.omit) 
+cor2 = cor.test(d.no.outlier$Rins.gain,d.no.outlier$family, na.action=na.omit) 
+cor3 = cor.test(d.no.outlier$Rins.gain,d.no.outlier$friends, na.action=na.omit) 
+cor4 = cor.test(d.no.outlier$Rins.gain,d.no.outlier$so, na.action=na.omit)
+
+cor1 = cor.test(d.no.outlier$Rins.loss,d.no.outlier$ss, na.action=na.omit) 
+cor2 = cor.test(d.no.outlier$Rins.loss,d.no.outlier$family, na.action=na.omit) 
+cor3 = cor.test(d.no.outlier$Rins.loss,d.no.outlier$friends, na.action=na.omit) 
+cor4 = cor.test(d.no.outlier$Rins.loss,d.no.outlier$so, na.action=na.omit) 
+#nothing
+
+#ELS correlations
+cor5 = cor.test(d$Rins.gain,d$events)
+cor6 = cor.test(d$Rins.gain,d$categs)
+cor7 = cor.test(d$Rins.gain,d$subjeval)
+
+cor8 = cor.test(d$Rins.loss,d$events)
+cor9 = cor.test(d$Rins.loss,d$categs)
+cor10 = cor.test(d$Rins.loss,d$subjeval)
+
+#linear regressions
+r1 = with(d, lm(Rins.loss ~ events * ss))
+r2 = with(d, lm(Rins.loss ~ categs * ss))
+r3 = with(d, lm(Rins.loss ~ subjeval * ss)) #main effect ss p = .07, interaction p = .07
+r4 = with(d, lm(Rins.loss ~ events * friends))
+r5 = with(d, lm(Rins.loss ~ categs * friends)) 
+r6 = with(d, lm(Rins.loss ~ subjeval * friends)) 
+r7 = with(d, lm(Rins.loss ~ events * so)) 
+r8 = with(d, lm(Rins.loss ~ categs * so)) 
+r9 = with(d, lm(Rins.loss ~ subjeval * so))
+summary(lm(d$Rins.loss ~ d$friends + d$events + d$categs + d$subjeval))
+
+r1 = with(d, lm(Rins.gain ~ events * ss))
+r2 = with(d, lm(Rins.gain ~ categs * ss))
+r3 = with(d, lm(Rins.gain ~ subjeval * ss)) 
+r4 = with(d, lm(Rins.gain ~ events * friends))
+r5 = with(d, lm(Rins.gain ~ categs * friends)) 
+r6 = with(d, lm(Rins.gain ~ subjeval * friends)) 
+r7 = with(d, lm(Rins.gain ~ events * so)) 
+r8 = with(d, lm(Rins.gain ~ categs * so)) 
+r9 = with(d, lm(Rins.gain ~ subjeval * so))
+summary(lm(d$Rins.gain ~ d$friends + d$events + d$categs + d$subjeval))
+```
+
+### L insula
+
+```{r}
+```{r}
+#social support correlations
+cor1 = cor.test(d.no.outlier$Lins.gain,d.no.outlier$ss, na.action=na.omit) 
+cor2 = cor.test(d.no.outlier$Lins.gain,d.no.outlier$family, na.action=na.omit) 
+cor3 = cor.test(d.no.outlier$Lins.gain,d.no.outlier$friends, na.action=na.omit) 
+cor4 = cor.test(d.no.outlier$Lins.gain,d.no.outlier$so, na.action=na.omit)
+
+cor1 = cor.test(d.no.outlier$Lins.loss,d.no.outlier$ss, na.action=na.omit) 
+cor2 = cor.test(d.no.outlier$Lins.loss,d.no.outlier$family, na.action=na.omit) 
+cor3 = cor.test(d.no.outlier$Lins.loss,d.no.outlier$friends, na.action=na.omit) 
+cor4 = cor.test(d.no.outlier$Lins.loss,d.no.outlier$so, na.action=na.omit) 
+#nothing!
+
+#ELS correlations
+cor5 = cor.test(d$Lins.gain,d$events)
+cor6 = cor.test(d$Lins.gain,d$categs)
+cor7 = cor.test(d$Lins.gain,d$subjeval)
+
+cor8 = cor.test(d$Lins.loss,d$events)
+cor9 = cor.test(d$Lins.loss,d$categs)
+cor10 = cor.test(d$Lins.loss,d$subjeval)
+
+#linear regressions
+r1 = with(d, lm(Lins.loss ~ events * ss))
+r2 = with(d, lm(Lins.loss ~ categs * ss))
+r3 = with(d, lm(Lins.loss ~ subjeval * ss)) #interaction is marginally significant, p = .09
+r4 = with(d, lm(Lins.loss ~ events * friends))
+r5 = with(d, lm(Lins.loss ~ categs * friends)) 
+r6 = with(d, lm(Lins.loss ~ subjeval * friends)) 
+r7 = with(d, lm(Lins.loss ~ events * so)) 
+r8 = with(d, lm(Lins.loss ~ categs * so)) 
+r9 = with(d, lm(Lins.loss ~ subjeval * so)) #interaction is marginally significant, p = .098
+summary(lm(d$Lins.loss ~ d$ss + d$events + d$categs + d$subjeval))
+```

@@ -1,0 +1,47 @@
+KIDMID RT analyses.
+========================================================
+
+```{r}
+setwd("~/Documents/STANFORD/FYP/KIDMID/Analysis/RT")
+d1 = read.csv('RT_15subjects_20-Jan-2103.csv')
+d2 = read.csv('accuracy_15subjects20-Jan-2014.csv')
+```
+
+```{r}
+#exclude subject 007
+d1 = subset(d1, !(d1$Subject %in% c("7")))
+d2 = subset(d2, !(d2$Subject %in% c("7")))       
+
+d1[d1 == 0] <- NA  #change zeros to NA
+rt_barplot = with(d1, boxplot(gain, loss, nongain, nonloss))
+gain.mean = mean(d1$gain, na.rm = TRUE)
+loss.mean = mean(d1$loss, na.rm = TRUE)
+nongain.mean = mean(d1$nongain, na.rm = TRUE)
+nonloss.mean = mean(d1$nonloss, na.rm = TRUE)
+```
+
+## RT t-tests
+
+```{r}
+t.test(d1$gain, d1$nongain, na.rm = TRUE)
+t.test(d1$gain, d1$loss, na.rm = TRUE)
+t.test(d1$loss, d1$nonloss, na.rm = TRUE)
+t.test(d1$gain, d1$nonloss, na.rm = TRUE)
+t.test(d1$loss, d1$nongain, na.rm = TRUE)
+
+#barplot()
+#summary(aov(gain ~ nongain,  data = d1))
+#summary(oneway.test(gain ~ nongain + loss + nonloss, data = d1, na.action=na.omit))
+```
+
+## Accuracy t-tests
+
+```{r}
+#d2 = subset(d2, !(d2$Subject %in% c("16", "17", "18")))   
+acc_barplot = with(d2, boxplot(gain, loss, nongain, nonloss))
+t.test(d2$gain, d2$nongain, na.rm = TRUE)
+t.test(d2$gain, d2$loss, na.rm = TRUE)
+t.test(d2$loss, d2$nonloss, na.rm = TRUE)
+t.test(d2$gain, d2$nonloss, na.rm = TRUE)
+t.test(d2$loss, d2$nongain, na.rm = TRUE)
+```

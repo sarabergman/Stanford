@@ -1,0 +1,179 @@
+---
+title: "kidmid behavior"
+output: pdf_document
+---
+
+```{r}
+require(ggplot2)
+setwd("~/Documents/ELS/KIDMID/Analysis/behavior")
+d = read.csv("all_behavior_26-Aug-2014.csv", header=TRUE) #change to updated version
+
+n = length(d$subID)
+accuracy = data.frame(d$gain_acc,d$loss_acc,d$nongain_acc,d$nonloss_acc,d$total_acc)
+rt = data.frame(d$rt_gain,d$rt_loss,d$rt_nongain,d$rt_nonloss,d$rt_mean)
+counts = data.frame(d$gain_count, d$loss_count, d$nongain_count, d$nonloss_count)
+#mean_rt = (d$rt_gain + d$rt_loss + d$rt_nongain + d$rt_nonloss)/4
+#rt = data.frame(d$rt_gain,d$rt_loss,d$rt_nongain,d$rt_nonloss,mean_rt)
+```
+
+Summary statistics 
+----------------------
+
+--`r n` subjects 
+
+### Accuracy
+```{r accuracy}
+plot1 = boxplot(accuracy, names = c("gain","loss","nongain","nonloss","total"),ylab=("percent successfully pressed before target"))
+```
+
+The total accuracy (`r round(mean(d$total_acc),3)*100`%) is lower than what is expected. Participants should be successfully pressing the button before the target-offset approximately 66% of the time.
+
+**Gain**: mean = `r round(mean(d$gain_acc),3)*100`%; median = `r round(median(d$gain_acc),3)*100`%; min = `r round(min(d$gain_acc),3)*100`%; max = `r round(max(d$gain_acc),3)*100`%
+
+**Loss**: mean = `r round(mean(d$loss_acc),3)*100`%; median = `r round(median(d$loss_acc),3)*100`%; min = `r round(min(d$loss_acc),3)*100`%; max = `r round(max(d$loss_acc),3)*100`%
+
+**Nongain**: mean = `r round(mean(d$nongain_acc),3)*100`%; median = `r round(median(d$nongain_acc),3)*100`%; min = `r round(min(d$nongain_acc),3)*100`%; max = `r round(max(d$nongain_acc),3)*100`%
+
+**Nonloss**: mean = `r round(mean(d$nonloss_acc),3)*100`%; median = `r round(median(d$nonloss_acc),3)*100`%; min = `r round(min(d$nonloss_acc),3)*100`%; max = `r round(max(d$nonloss_acc),3)*100`%
+
+**All trials**: mean = `r round(mean(d$total_acc),3)*100`%; median = `r round(median(d$total_acc),3)*100`%; min = `r round(min(d$total_acc),3)*100`%; max = `r round(max(d$total_acc),3)*100`%
+
+```{r total_acc}
+hist(d$total_acc)
+summary(d$total_acc)
+total.out = boxplot.stats(d$total_acc, do.out=TRUE)
+total.out$out
+```
+
+```{r gain_acc}
+hist(d$gain_acc)
+summary(d$gain_acc)
+gain_acc.out = boxplot.stats(d$gain_acc, do.out=TRUE)
+gain_acc.out$out
+```
+
+```{r loss_acc}
+hist(d$loss_acc)
+summary(d$loss_acc)
+loss_acc.out = boxplot.stats(d$loss_acc, do.out=TRUE)
+loss_acc.out$out
+```
+
+```{r nongain_acc}
+hist(d$nongain_acc)
+summary(d$nongain_acc)
+nongain_acc.out = boxplot.stats(d$nongain_acc, do.out=TRUE)
+nongain_acc.out$out
+```
+
+```{r nonloss_acc}
+hist(d$nonloss_acc)
+summary(d$nonloss_acc)
+nonloss_acc.out = boxplot.stats(d$nonloss_acc, do.out=TRUE)
+nonloss_acc.out$out
+```
+
+### Missed Trials
+
+```{r missed}
+plot2 = boxplot(d$missed_percent,ylab=("percent of trials when no button was pressed"))
+```
+
+**Outliers**
+```{r outliers}
+missed.out = boxplot.stats(d$missed_percent,do.out = TRUE)
+missed.out$out
+hist(d$missed_percent)
+```
+
+### Response Time
+```{r rt}
+plot3 = boxplot(rt, names = c("gain","loss","nongain","nonloss","mean"),ylab=("response time (ms)"))
+```
+
+**Gain**: mean = `r round(mean(rt$d.rt_gain),2)` ms; median = `r round(median(rt$d.rt_gain),2)` ms; min = `r round(min(rt$d.rt_gain),2)` ms; max = `r round(max(rt$d.rt_gain),2)` ms
+
+**Loss**: mean = `r round(mean(rt$d.rt_loss),2)` ms; median = `r round(median(rt$d.rt_loss),2)` ms; min = `r round(min(rt$d.rt_loss),2)` ms; max = `r round(max(rt$d.rt_loss),2)` ms
+
+**Nongain**: mean = `r round(mean(rt$d.rt_nongain),2)` ms; median = `r round(median(rt$d.rt_nongain),2)` ms; min = `r round(min(rt$d.rt_nongain),2)` ms; max = `r round(max(rt$d.rt_nongain),2)` ms
+
+**Nonloss**: mean = `r round(mean(rt$d.rt_nonloss),2)` ms; median = `r round(median(rt$d.rt_nonloss),2)` ms; min = `r round(min(rt$d.rt_nonloss),2)` ms; max = `r round(max(rt$d.rt_nonloss),2)` ms
+
+**All trials**: mean = `r round(mean(rt$d.rt_mean),2)` ms; median = `r round(median(rt$d.rt_mean),2)` ms; min = `r round(min(rt$d.rt_mean),2)` ms; max = `r round(max(rt$d.rt_mean),2)` ms
+
+```{r rt_gain}
+hist(d$rt_gain)
+summary(d$rt_gain)
+gain_rt.out = boxplot.stats(d$rt_gain, do.out=TRUE)
+gain_rt.out$out
+```
+
+```{r rt_loss}
+hist(d$rt_loss)
+summary(d$rt_loss)
+rt_loss.out = boxplot.stats(d$rt_loss, do.out=TRUE)
+rt_loss.out$out
+```
+
+```{r rt_nongain}
+hist(d$rt_nongain)
+summary(d$rt_nongain)
+rt_nongain.out = boxplot.stats(d$rt_nongain, do.out=TRUE)
+rt_nongain.out$out
+```
+
+```{r rt_nonloss}
+hist(d$rt_nonloss)
+summary(d$rt_nonloss)
+rt_nonloss.out = boxplot.stats(d$rt_nonloss, do.out=TRUE)
+rt_nonloss.out$out
+```
+
+```{rt_mean}
+hist(d$rt_mean)
+summary(d$rt_mean)
+rt_mean.out = boxplot.stats(d$rt_mean, do.out=TRUE)
+rt_mean.out$out
+```
+
+### Number of trials going into the single-subject model
+
+```{r outcome counts}
+plot4 = boxplot(counts, names = c("gain","loss","nongain","nonloss"), ylab="number of trials in outcome analysis per subject")
+counts.m = as.matrix(counts)
+
+
+barplot(counts.m,names.arg = c("gain","loss","nongain","nonloss"), ylab = "total number of trials in outcome analysis", col = " light blue", main = "Total number of trials in outcome analysis for all subjects")
+# text(.5,865, sum(d$gain_count))
+# text(1.5, sum(d$gain_count))
+
+```
+
+```{r gain outcome counts}
+hist(d$gain_count)
+summary(d$gain_count)
+gain_count.out = boxplot.stats(d$gain_count, do.out=TRUE)
+gain_count.out$out
+```
+
+```{r loss outcome counts}
+hist(d$loss_count)
+summary(d$loss_count)
+loss_count.out = boxplot.stats(d$loss_count, do.out=TRUE)
+loss_count.out$out
+```
+
+```{r nongain outcome counts}
+hist(d$nongain_count)
+summary(d$nongain_count)
+nongain_count.out = boxplot.stats(d$nongain_count, do.out=TRUE)
+nongain_count.out$out
+```
+
+```{r nonloss outcome counts}
+hist(d$nonloss_count)
+summary(d$nonloss_count)
+nonloss_count.out = boxplot.stats(d$nonloss_count, do.out=TRUE)
+nonloss_count.out$out
+```
+

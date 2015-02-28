@@ -1,0 +1,12 @@
+/ContrastName1	group mean 
+/ContrastName2	SS total 
+/ContrastName3	SS total neg 
+/NumWaves	2
+/NumContrasts	3
+/PPheights		1.000000e+00	4.800000e+01	4.800000e+01
+/RequiredEffect		0.565	2.342	2.342
+
+/Matrix
+1.000000e+00 0.000000e+00 
+0.000000e+00 1.000000e+00 
+0.000000e+00 -1.000000e+00 

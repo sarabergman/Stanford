@@ -1,0 +1,11 @@
+#! /bin/sh
+# mount biac4
+# You will be prompted for your super user password: 
+
+#sudo mount_nfs -P biac3:/biac3/gotlib4/ /biac3/gotlib4
+#sudo mount_nfs -P biac3:/biac3/gotlib7/ /biac3/gotlib7
+#sudo mount_nfs -P biac2:/biac2/gotlib1/ /biac2/gotlib1
+#sudo mount_nfs -P biac2:/biac2/gotlib2/ /biac2/gotlib2
+#sudo mount_nfs -P biac2:/biac2/gotlib6/ /biac2/gotlib6
+#mkdir biac4/gotlib
+sudo mount_nfs -P biac4:/biac4/gotlib/ /biac4/gotlib/

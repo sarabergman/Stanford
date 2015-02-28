@@ -1,0 +1,58 @@
+---
+title: "visualizing.PPI"
+output: html_document
+---
+
+```{r}
+
+setwd("~/Documents/ELS/KIDMID/Analysis/ROI/PPI/RightNAcc.Model5")
+d = read.csv("visualizingPPI.csv")
+
+anticipation = c(d$Insula.again,d$Insula.anongain,d$Nacc.again,d$Nacc.anongain)
+condition = c(rep(x = "Insula ant gain",times = 66), rep(x = "Insula ant nongain", times = 66), rep(x = "NAcc ant gain", times = 66), rep(x = "NAcc ant nongain", times = 66))
+brainbar = data.frame(condition,anticipation)
+
+ant.summary = data.frame(
+  condition = levels(brainbar$condition),
+  mean = tapply(brainbar$anticipation, brainbar$condition, mean),
+  n = tapply(brainbar$anticipation, brainbar$condition, length),
+  sd = tapply(brainbar$anticipation, brainbar$condition, sd)
+  )
+
+#calculate standard error of the mean 
+ant.summary$sem = ant.summary$sd/sqrt(ant.summary$n) 
+
+#calculate margin of error for CI
+alpha = .05 #95% confidence interval
+ant.summary$me = qt(1-alpha/2, df = ant.summary$n)*ant.summary$sem
+
+#error bars represent 95% CI
+#png('barplot.CI.vSTR.anticipation.png')
+g1.CI = ggplot(ant.summary, aes(x = condition, y = mean)) + 
+  geom_bar(position = position_dodge(), stat="identity", fill="purple", width=.5) +
+  geom_errorbar(aes(ymin=mean-me, ymax=mean+me), width=.3) +
+  ggtitle("NAcc and Insula Anticipatory Activity / (Error bars represent 95% CI)") + # plot title
+  geom_hline(yintercept=0, linetype = 1) +
+  labs(y = "Percent BOLD signal change") +
+  theme_bw() +
+  #theme_classic()
+  theme(panel.grid.major = element_blank()) # remove x and y major grid lines
+print(g1.CI)
+
+
+g1.SE = ggplot(ant.summary, aes(x = condition, y = mean)) + 
+  geom_bar(position = position_dodge(), stat="identity", fill="purple", width=.5) +
+  geom_errorbar(aes(ymin=mean-sem, ymax=mean+sem), width=.3) +
+  labs(y = "Percent BOLD signal change") +
+  ggtitle("NAcc and Insula Anticipatory Activity / (Error bars represent SEM)") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank())
+print(g1.SE)
+
+
+barplot(height=c(mean(d$Insula.againVnongain),mean(d$Nacc.againVnongain)),names.arg = c("Insula","NAcc"), axes = TRUE, ylab = c("Parameter Estimate"), col=c("dark blue","blue"))
+title(main = "Anticipation of Gain > Nongain: P.E.s from the 'psych' regressor of the PPI")
+
+
+```

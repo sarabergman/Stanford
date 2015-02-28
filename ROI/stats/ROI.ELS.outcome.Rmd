@@ -1,0 +1,454 @@
+Title
+========================================================
+
+```{r load in data}
+require(ggplot2)
+setwd("~/Documents/ELS/KIDMID/Analysis/ROI/73N_ELS")
+#setwd("/Volumes/TUXEDOSAM/73N_ELS/")
+a = read.csv("featquery_anticipation09-Feb-2015.csv")
+o = read.csv("featquery_outcome09-Feb-2015.csv")
+setwd("~/Documents/ELS/KIDMID/Analysis/behavior")
+#setwd("/Volumes/TUXEDOSAM/")
+b = read.csv("all_behavior_10-Feb-2015.csv")
+
+#removing behavioral outliers
+b = b[-c(14,26,33),] 
+d = cbind(b,o) #merge data frames
+
+d = d[-c(64,67),] #remove people with empty loss EV
+
+d2 = d[-c(5,7,31),] #ELS outliers
+
+d$gender = factor(d$gender)
+d2$gender = factor(d2$gender)
+```
+
+```{r ELS}
+#convert ELS from continuous to categorical
+summary(d$ELS.subj) 
+d$ELS.subjcat1 = cut(d$ELS.subj, c(0,5,10,30), right=FALSE) #3 groups= 0-4, 5-10, 11-30
+d$ELS.subjcat2 = cut(d$ELS.subj, c(0,5,10,30), right=FALSE, labels=c("low","int","high")) 
+d$ELS.subjcat3 = cut(d$ELS.subj, c(0,5,30), right=FALSE, labels=c("low","high"))
+table(d$ELS.subjcat2)
+table(d$ELS.subjcat3)
+```
+
+Left caudate
+-------------
+```{r Lcaud}
+##MAIN EFFECTS ONLY
+#create dataframe to make bargraphs for main effects 
+Lcaud.pe = c(d$Lcaud_gain,d$Lcaud_nongain,d$Lcaud_loss,d$Lcaud_nonloss)
+condition.2 = c(rep(x = "gain", times = 71), rep(x = "nongain", times = 71), rep(x = "loss", times = 71), rep(x = "nonloss", times = 71))
+Lcaudbar = data.frame(condition.2,Lcaud.pe)
+
+Lcaud.summary = data.frame(
+  condition = levels(Lcaudbar$condition.2),
+  mean = tapply(Lcaudbar$Lcaud.pe, Lcaudbar$condition, mean),
+  n = tapply(Lcaudbar$Lcaud.pe, Lcaudbar$condition, length),
+  sd = tapply(Lcaudbar$Lcaud.pe, Lcaudbar$condition, sd)
+  )
+
+#calculate standard error of the mean 
+Lcaud.summary$sem = Lcaud.summary$sd/sqrt(Lcaud.summary$n) 
+
+#calculate margin of error for CI
+alpha = .05 #95% confidence interval
+Lcaud.summary$me = qt(1-alpha/2, df = Lcaud.summary$n)*Lcaud.summary$sem
+
+#error bars represent standard error of the mean
+g2.SE = ggplot(Lcaud.summary, aes(x = condition, y = mean)) + 
+  geom_bar(position = position_dodge(), stat="identity", fill="blue", width=.5) +
+  geom_errorbar(aes(ymin=mean-sem, ymax=mean+sem), width=.3) +
+  labs(x = "Outcome", y = "Percent BOLD signal change in L Caud") +
+  scale_y_continuous(limits=c(-.2, 0)) +
+  ggtitle("Outcome L Caud Activity") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank())
+print(g2.SE)
+
+###ELS EFFECTS
+#rearrange data to make bargraphs for ELS and condition effects 
+#ELS groups = high, int, low
+ELScond = c(rep(x=d$ELS.subjcat2, times = 4)) #rep d$ELS.subjcat2 vector 4 times
+Lcaudbar.els = data.frame(condition.2,Lcaud.pe,ELScond) #concatenate vectors
+Lcaud.means = aggregate(Lcaudbar.els$Lcaud.pe, list(ELS = Lcaudbar.els$ELScond, cond = Lcaudbar.els$condition.2), mean) #sort pe means by condition and ELS cat
+Lcaud.sd = aggregate(Lcaudbar.els$Lcaud.pe, list(ELS = Lcaudbar.els$ELScond, cond = Lcaudbar.els$condition.2), sd)
+Lcaud.n = aggregate(Lcaudbar.els$Lcaud.pe, list(ELS = Lcaudbar.els$ELScond, cond = Lcaudbar.els$condition.2), length)
+
+Lcaud.summary.els = data.frame(
+  Lcaud.means,  #x = mean
+  sd = Lcaud.sd[3], #x.1 = sd
+  n = Lcaud.n[3]) #x.2 = n
+
+#calculate standard error of the mean 
+Lcaud.summary.els$sem = Lcaud.summary.els$x.1/sqrt(Lcaud.summary.els$x.2) 
+factor(Lcaud.summary.els$ELS)
+Lcaud.summary.els$ELS = c(rep(c("low","int","high"), times = 4))
+
+
+---
+#ELS groups = high, low
+ELScond.hl = c(rep(x=d$ELS.subjcat3, times = 4))
+Lcaudbar.els2 = data.frame(condition.2,Lcaud.pe,ELScond.hl)
+Lcaud.means2 = aggregate(Lcaudbar.els2$Lcaud.pe, list(ELS = Lcaudbar.els2$ELScond.hl, cond = Lcaudbar.els2$condition.2), mean)
+Lcaud.sd2 = aggregate(Lcaudbar.els2$Lcaud.pe, list(ELS = Lcaudbar.els2$ELScond.hl, cond = Lcaudbar.els2$condition.2), sd)
+Lcaud.n2 = aggregate(Lcaudbar.els2$Lcaud.pe, list(ELS = Lcaudbar.els2$ELScond.hl, cond = Lcaudbar.els2$condition.2), length)
+
+Lcaud.summary.els2 = data.frame(
+  Lcaud.means2,  #x = mean
+  sd = Lcaud.sd2[3], #x.1 = sd
+  n = Lcaud.n2[3]) #x.2 = n
+
+#calculate standard error of the mean 
+Lcaud.summary.els2$sem = Lcaud.summary.els2$x.1/sqrt(Lcaud.summary.els2$x.2) 
+factor(Lcaud.summary.els2$ELS)
+Lcaud.summary.els2$ELS = c(rep(c("low","high"), times = 4))
+
+
+limits = aes(ymin=x-sem, ymax=x+sem)
+g2.ELS = ggplot(Lcaud.summary.els2, aes(x = cond, y = x, fill = ELS)) +  
+  geom_bar(stat="identity",position=position_dodge(), width = .75) +
+  geom_errorbar(limits,position=position_dodge(width=.75), width = .5) +
+  labs(x = "Outcome", y = "% BOLD signal change") +
+  scale_y_continuous(limits=c(-.32, .1)) +
+  ggtitle("Outcome L Caud Activity") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank())
+print(g2.ELS)
+
+summary(lm(d$Lcaud_loss-d$Lcaud_nonloss ~ d$ELS.subj + d$v2 + d$gender + d$rt_loss-d$rt_nonloss))
+summary(lm(d$Lcaud_loss-d$Lcaud_nonloss ~ d$ELS.subj + d$v2))
+summary(lm(d$Lcaud_loss-d$Lcaud_nonloss ~ (d$ELS.subj * d$gender) + d$v2))
+cor.test(d$Lcaud_loss-d$Lcaud_nonloss, d$ELS.subj)
+cor.test(d$Lput_nonloss, d$ELS.subj)
+
+cor.test(d$Lins_nonloss, d$ELS.subj)
+
+d$Lcaudlvnl = d$Lcaud_loss-d$Lcaud_nonloss
+c2 = ggplot(d, aes(x=ELS.subj, y=Lcaudlvnl)) + 
+    geom_point(size=4) + 
+    geom_smooth(method=lm)
+print(c2)
+
+summary(lm(d$Lcaud_gain-d$Lcaud_nongain ~ d$ELS.subj + d$gender + d$rt_gain-d$rt_nongain))
+```
+
+
+Left Putamen
+---------------
+```{r Lput}
+#create dataframe to make bargraphs
+Lput.pe = c(d$Lput_gain,d$Lput_nongain,d$Lput_loss,d$Lput_nonloss)
+condition.2 = c(rep(x = "gain", times = 71), rep(x = "nongain", times = 71), rep(x = "loss", times = 71), rep(x = "nonloss", times = 71))
+Lputbar = data.frame(condition.2,Lput.pe)
+
+Lput.summary = data.frame(
+  condition = levels(Lputbar$condition.2),
+  mean = tapply(Lputbar$Lput.pe, Lputbar$condition, mean),
+  n = tapply(Lputbar$Lput.pe, Lputbar$condition, length),
+  sd = tapply(Lputbar$Lput.pe, Lputbar$condition, sd)
+  )
+
+#calculate standard error of the mean 
+Lput.summary$sem = Lput.summary$sd/sqrt(Lput.summary$n) 
+
+#calculate margin of error for CI
+alpha = .05 #95% confidence interval
+Lput.summary$me = qt(1-alpha/2, df = Lput.summary$n)*Lput.summary$sem
+
+#error bars represent standard error of the mean
+g3.SE = ggplot(Lput.summary, aes(x = condition, y = mean)) + 
+  geom_bar(position = position_dodge(), stat="identity", fill="blue", width=.5) +
+  geom_errorbar(aes(ymin=mean-sem, ymax=mean+sem), width=.3) +
+  scale_y_continuous(limits=c(-.2, 0)) +
+  labs(x = "Outcome", y = "Percent BOLD signal change in L Put") +
+  ggtitle("Outcome L Putamen Activity") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank())
+print(g3.SE)
+
+
+###ELS effects
+Lputbar.els = data.frame(condition.2,Lput.pe,ELScond) #concatenate vectors
+Lput.means = aggregate(Lputbar.els$Lput.pe, list(ELS = Lputbar.els$ELScond, cond = Lputbar.els$condition.2), mean) #sort pe means by condition and ELS cat
+Lput.sd = aggregate(Lputbar.els$Lput.pe, list(ELS = Lputbar.els$ELScond, cond = Lputbar.els$condition.2), sd)
+Lput.n = aggregate(Lputbar.els$Lput.pe, list(ELS = Lputbar.els$ELScond, cond = Lputbar.els$condition.2), length)
+
+Lput.summary.els = data.frame(
+  Lput.means,  #x = mean
+  sd = Lput.sd[3], #x.1 = sd
+  n = Lput.n[3]) #x.2 = n
+
+#calculate standard error of the mean 
+Lput.summary.els$sem = Lput.summary.els$x.1/sqrt(Lput.summary.els$x.2) 
+factor(Lput.summary.els$ELS)
+Lput.summary.els$ELS = c(rep(c("low","int","high"), times = 4))
+
+
+#---
+###ELS effects
+# high v low
+ELScond.hl = c(rep(x=d$ELS.subjcat3, times = 4))
+Lputbar.els2 = data.frame(condition.2,Lput.pe,ELScond.hl) #concatenate vectors
+Lput.means2 = aggregate(Lputbar.els2$Lput.pe, list(ELS = Lputbar.els2$ELScond.hl, cond = Lputbar.els2$condition.2), mean) #sort pe means by condition and ELS cat
+Lput.sd2 = aggregate(Lputbar.els2$Lput.pe, list(ELS = Lputbar.els2$ELScond.hl, cond = Lputbar.els2$condition.2), sd)
+Lput.n2 = aggregate(Lputbar.els2$Lput.pe, list(ELS = Lputbar.els2$ELScond.hl, cond = Lputbar.els2$condition.2), length)
+
+Lput.summary.els2 = data.frame(
+  Lput.means2,  #x = mean
+  sd = Lput.sd2[3], #x.1 = sd
+  n = Lput.n2[3]) #x.2 = n
+
+#calculate standard error of the mean 
+Lput.summary.els2$sem = Lput.summary.els2$x.1/sqrt(Lput.summary.els2$x.2) 
+factor(Lput.summary.els2$ELS)
+Lput.summary.els2$ELS = c(rep(c("low","high"), times = 4))
+  
+#--
+limits = aes(ymin=x-sem, ymax=x+sem)
+g3.ELS = ggplot(Lput.summary.els2, aes(x = cond, y = x, fill = ELS)) +  
+  geom_bar(stat="identity",position=position_dodge(), width = .75) +
+  geom_errorbar(limits,position=position_dodge(width=.75), width = .5) +
+  labs(x = "Outcome", y = "% BOLD signal change") +
+  scale_y_continuous(limits=c(-.32, .1)) +
+  ggtitle("Outcome L Put Activity") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank())
+print(g3.ELS)
+
+summary(lm(d$Lput_loss-d$Lput_nonloss ~ d$ELS.subj + d$v2 + d$gender + d$rt_loss-d$rt_nonloss))
+summary(lm(d$Lput_loss-d$Lput_nonloss ~ d$ELS.subj + d$v2 + d$gender))
+summary(lm(d$Lput_loss-d$Lput_nonloss ~ (d$ELS.subj * d$gender) + d$v2))
+cor.test(d$Lput_loss-d$Lput_nonloss, d$ELS.subj)
+
+summary(lm(d$Lput_gain-d$Lput_nongain ~ d$ELS.subj))
+
+```
+
+Left Insula
+--------------
+```{r Lins}
+#create dataframe to make bargraphs
+Lins.pe = c(d$Lins_gain,d$Lins_nongain,d$Lins_loss,d$Lins_nonloss)
+condition.2 = c(rep(x = "gain", times = 71), rep(x = "nongain", times = 71), rep(x = "loss", times = 71), rep(x = "nonloss", times = 71))
+Linsbar = data.frame(condition.2,Lins.pe)
+
+Lins.summary = data.frame(
+  condition = levels(Linsbar$condition.2),
+  mean = tapply(Linsbar$Lins.pe, Linsbar$condition, mean),
+  n = tapply(Linsbar$Lins.pe, Linsbar$condition, length),
+  sd = tapply(Linsbar$Lins.pe, Linsbar$condition, sd)
+  )
+
+#calculate standard error of the mean 
+Lins.summary$sem = Lins.summary$sd/sqrt(Lins.summary$n) 
+
+#calculate margin of error for CI
+alpha = .05 #95% confidence interval
+Lins.summary$me = qt(1-alpha/2, df = Lins.summary$n)*Lins.summary$sem
+
+#error bars represent standard error of the mean
+g5.SE = ggplot(Lins.summary, aes(x = condition, y = mean)) + 
+  geom_bar(position = position_dodge(), stat="identity", fill="blue", width=.5) +
+  geom_errorbar(aes(ymin=mean-sem, ymax=mean+sem), width=.3) +
+  labs(x = "Outcome", y = "Percent BOLD signal change in L Ins") +
+  ggtitle("Outcome L Insula Activity") +
+  scale_y_continuous(limits=c(-.2, 0)) +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank())
+print(g5.SE)
+
+###ELS effects
+Linsbar.els = data.frame(condition.2,Lins.pe,ELScond) #concatenate vectors
+Lins.means = aggregate(Linsbar.els$Lins.pe, list(ELS = Linsbar.els$ELScond, cond = Linsbar.els$condition.2), mean) #sort pe means by condition and ELS cat
+Lins.sd = aggregate(Linsbar.els$Lins.pe, list(ELS = Linsbar.els$ELScond, cond = Linsbar.els$condition.2), sd)
+Lins.n = aggregate(Linsbar.els$Lins.pe, list(ELS = Linsbar.els$ELScond, cond = Linsbar.els$condition.2), length)
+
+Lins.summary.els = data.frame(
+  Lins.means,  #x = mean
+  sd = Lins.sd[3], #x.1 = sd
+  n = Lins.n[3]) #x.2 = n
+
+#calculate standard error of the mean 
+Lins.summary.els$sem = Lins.summary.els$x.1/sqrt(Lins.summary.els$x.2) 
+factor(Lins.summary.els$ELS)
+Lins.summary.els$ELS = c(rep(c("low","int","high"), times = 4))
+
+#----
+##high v low
+ELScond.hl = c(rep(x=d$ELS.subjcat3, times = 4))
+Linsbar.els2 = data.frame(condition.2,Lins.pe,ELScond.hl) #concatenate vectors
+Lins.means2 = aggregate(Linsbar.els2$Lins.pe, list(ELS = Linsbar.els2$ELScond.hl, cond = Linsbar.els2$condition.2), mean) #sort pe means by condition and ELS cat
+Lins.sd2 = aggregate(Linsbar.els2$Lins.pe, list(ELS = Linsbar.els2$ELScond.hl, cond = Linsbar.els2$condition.2), sd)
+Lins.n2 = aggregate(Linsbar.els2$Lins.pe, list(ELS = Linsbar.els2$ELScond.hl, cond = Linsbar.els2$condition.2), length)
+
+Lins.summary.els2 = data.frame(
+  Lins.means2,  #x = mean
+  sd = Lins.sd2[3], #x.1 = sd
+  n = Lins.n2[3]) #x.2 = n
+
+#calculate standard error of the mean 
+Lins.summary.els2$sem = Lins.summary.els2$x.1/sqrt(Lins.summary.els2$x.2) 
+factor(Lins.summary.els2$ELS)
+Lins.summary.els2$ELS = c(rep(c("low","high"), times = 4))
+
+limits = aes(ymin=x-sem, ymax=x+sem)
+g5.ELS = ggplot(Lins.summary.els2, aes(x = cond, y = x, fill = ELS)) +  
+  geom_bar(stat="identity",position=position_dodge(), width = .75) +
+  geom_errorbar(limits,position=position_dodge(width=.75), width = .5) +
+  labs(x = "Outcome", y = "% BOLD signal change") +
+  scale_y_continuous(limits=c(-.32, .1)) +
+  ggtitle("Outcome L Ins Activity") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank())
+print(g5.ELS)
+
+summary(lm(d$Lins_loss-d$Lins_nonloss ~ d$ELS.subj + d$v2 + d$gender + d$rt_loss-d$rt_nonloss))
+summary(lm(d$Lins_loss-d$Lins_nonloss ~ d$ELS.subj + d$v2))
+summary(lm(d$Lins_loss-d$Lins_nonloss ~ (d$ELS.subj * d$gender) + d$v2))
+cor.test(d$Lins_loss-d$Lins_nonloss,d$ELS.subj)
+
+summary(lm(d$Lins_gain-d$Lins_nongain ~ d$ELS.subj))
+
+```
+
+
+Left Pallidum
+---------------
+```{r Rpall}
+#create dataframe to make bargraphs
+Lpall.pe = c(d$Lpall_gain,d$Lpall_nongain,d$Lpall_loss,d$Lpall_nonloss)
+condition.2 = c(rep(x = "gain", times = 71), rep(x = "nongain", times = 71), rep(x = "loss", times = 71), rep(x = "nonloss", times = 71))
+Lpallbar = data.frame(condition.2,Lpall.pe)
+
+Lpall.summary = data.frame(
+  condition = levels(Lpallbar$condition.2),
+  mean = tapply(Lpallbar$Lpall.pe, Lpallbar$condition, mean),
+  n = tapply(Lpallbar$Lpall.pe, Lpallbar$condition, length),
+  sd = tapply(Lpallbar$Lpall.pe, Lpallbar$condition, sd)
+  )
+
+#calculate standard error of the mean 
+Lpall.summary$sem = Lpall.summary$sd/sqrt(Lpall.summary$n) 
+
+#calculate margin of error for CI
+alpha = .05 #95% confidence interval
+Lpall.summary$me = qt(1-alpha/2, df = Lpall.summary$n)*Lpall.summary$sem
+
+#error bars represent standard error of the mean
+g10.SE = ggplot(Lpall.summary, aes(x = condition, y = mean)) + 
+  geom_bar(position = position_dodge(), stat="identity", fill="blue", width=.5) +
+  geom_errorbar(aes(ymin=mean-sem, ymax=mean+sem), width=.3) +
+  labs(x = "Outcome", y = "Percent BOLD signal change in R Pall") +
+  ggtitle("Outcome R Pall Activity") +
+  scale_y_continuous(limits=c(-.2, 0)) +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank())
+print(g10.SE)
+
+###ELS effects
+Lpallbar.els = data.frame(condition.2,Lpall.pe,ELScond) #concatenate vectors
+Lpall.means = aggregate(Lpallbar.els$Lpall.pe, list(ELS = Lpallbar.els$ELScond, cond = Lpallbar.els$condition.2), mean) #sort pe means by condition and ELS cat
+Lpall.sd = aggregate(Lpallbar.els$Lpall.pe, list(ELS = Lpallbar.els$ELScond, cond = Lpallbar.els$condition.2), sd)
+Lpall.n = aggregate(Lpallbar.els$Lpall.pe, list(ELS = Lpallbar.els$ELScond, cond = Lpallbar.els$condition.2), length)
+
+Lpall.summary.els = data.frame(
+  Lpall.means,  #x = mean
+  sd = Lpall.sd[3], #x.1 = sd
+  n = Lpall.n[3]) #x.2 = n
+
+#calculate standard error of the mean 
+Lpall.summary.els$sem = Lpall.summary.els$x.1/sqrt(Lpall.summary.els$x.2) 
+factor(Lpall.summary.els$ELS)
+Lpall.summary.els$ELS = c(rep(c("low","int","high"), times = 4))
+
+
+#---
+#ELS high v low
+ELScond.hl = c(rep(x=d$ELS.subjcat3, times = 4))
+Lpallbar.els2 = data.frame(condition.2,Lpall.pe,ELScond.hl) #concatenate vectors
+Lpall.means2 = aggregate(Lpallbar.els2$Lpall.pe, list(ELS = Lpallbar.els2$ELScond.hl, cond = Lpallbar.els2$condition.2), mean) #sort pe means by condition and ELS cat
+Lpall.sd2 = aggregate(Lpallbar.els2$Lpall.pe, list(ELS = Lpallbar.els2$ELScond.hl, cond = Lpallbar.els2$condition.2), sd)
+Lpall.n2 = aggregate(Lpallbar.els2$Lpall.pe, list(ELS = Lpallbar.els2$ELScond.hl, cond = Lpallbar.els2$condition.2), length)
+
+Lpall.summary.els2 = data.frame(
+  Lpall.means2,  #x = mean
+  sd = Lpall.sd2[3], #x.1 = sd
+  n = Lpall.n2[3]) #x.2 = n
+
+#calculate standard error of the mean 
+Lpall.summary.els2$sem = Lpall.summary.els2$x.1/sqrt(Lpall.summary.els2$x.2) 
+factor(Lpall.summary.els2$ELS)
+Lpall.summary.els2$ELS = c(rep(c("low","high"), times = 4))
+
+limits = aes(ymin=x-sem, ymax=x+sem)
+g10.ELS = ggplot(Lpall.summary.els2, aes(x = cond, y = x, fill = ELS)) +  
+  geom_bar(stat="identity",position=position_dodge(), width = .75) +
+  geom_errorbar(limits,position=position_dodge(width=.75), width = .5) +
+  labs(x = "Outcome", y = "% BOLD signal change") +
+  scale_y_continuous(limits=c(-.32, .1)) +
+  ggtitle("Outcome R Pall Activity") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank())
+print(g10.ELS)
+
+summary(lm(d$Lpall_loss-d$Lpall_nonloss ~ d$ELS.subj + d$v2 + d$gender + d$rt_loss-d$rt_nonloss))
+summary(lm(d$Lpall_loss-d$Lpall_nonloss ~ d$ELS.subj + d$v2 + d$gender))
+summary(lm(d$Lpall_loss-d$Lpall_nonloss ~ (d$ELS.subj * d$gender) + d$v2))
+cor.test(d$Lpall_loss-d$Lpall_nonloss,d$ELS.subj)
+
+summary(lm(d$Lpall_gain-d$Lpall_nongain ~ d$ELS.subj))
+```
+
+```{r multiplot function}
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  require(grid)
+
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+
+  numPlots = length(plots)
+
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                    ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+
+ if (numPlots==1) {
+    print(plots[[1]])
+
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+
+```
+
+```{r}
+
+multiplot(g2.SE, g3.SE, g5.SE, g10.SE, cols=2)
+multiplot(g2.ELS, g3.ELS, g5.ELS, g10.ELS, cols=2)

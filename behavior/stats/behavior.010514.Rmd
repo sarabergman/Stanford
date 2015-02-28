@@ -1,0 +1,284 @@
+---
+title: "kidmid behavior"
+output: pdf_document
+---
+
+```{r}
+require(ggplot2)
+setwd("~/Documents/ELS/KIDMID/Analysis/behavior")
+d = read.csv("all_behavior_28-Dec-2014.csv", header=TRUE) #change to updated version
+
+n = length(d$subID)
+accuracy = data.frame(d$gain_acc,d$loss_acc,d$nongain_acc,d$nonloss_acc,d$total_acc)
+rt = data.frame(d$rt_gain,d$rt_loss,d$rt_nongain,d$rt_nonloss,d$rt_mean)
+counts = data.frame(d$gain_count, d$loss_count, d$nongain_count, d$nonloss_count, d$unsucc_gain_count, d$succ_avoid_loss_count)
+#mean_rt = (d$rt_gain + d$rt_loss + d$rt_nongain + d$rt_nonloss)/4
+#rt = data.frame(d$rt_gain,d$rt_loss,d$rt_nongain,d$rt_nonloss,mean_rt)
+```
+
+Summary statistics 
+----------------------
+
+--`r n` subjects 
+
+### Accuracy
+```{r accuracy}
+plot1 = boxplot(accuracy, names = c("gain","loss","nongain","nonloss","total"),ylab=("percent successfully pressed before target"))
+```
+
+The total accuracy (`r round(mean(d$total_acc),3)*100`%) is lower than what is expected. Participants should be successfully pressing the button before the target-offset approximately 66% of the time.
+
+**Gain**: mean = `r round(mean(d$gain_acc),3)*100`%; median = `r round(median(d$gain_acc),3)*100`%; min = `r round(min(d$gain_acc),3)*100`%; max = `r round(max(d$gain_acc),3)*100`%
+
+**Loss**: mean = `r round(mean(d$loss_acc),3)*100`%; median = `r round(median(d$loss_acc),3)*100`%; min = `r round(min(d$loss_acc),3)*100`%; max = `r round(max(d$loss_acc),3)*100`%
+
+**Nongain**: mean = `r round(mean(d$nongain_acc),3)*100`%; median = `r round(median(d$nongain_acc),3)*100`%; min = `r round(min(d$nongain_acc),3)*100`%; max = `r round(max(d$nongain_acc),3)*100`%
+
+**Nonloss**: mean = `r round(mean(d$nonloss_acc),3)*100`%; median = `r round(median(d$nonloss_acc),3)*100`%; min = `r round(min(d$nonloss_acc),3)*100`%; max = `r round(max(d$nonloss_acc),3)*100`%
+
+**All trials**: mean = `r round(mean(d$total_acc),3)*100`%; median = `r round(median(d$total_acc),3)*100`%; min = `r round(min(d$total_acc),3)*100`%; max = `r round(max(d$total_acc),3)*100`%
+
+
+```{r total_acc}
+hist(d$total_acc)
+summary(d$total_acc)
+total.out = boxplot.stats(d$total_acc, do.out=TRUE)
+total.out$out
+```
+
+```{r gain_acc}
+hist(d$gain_acc)
+summary(d$gain_acc)
+gain_acc.out = boxplot.stats(d$gain_acc, do.out=TRUE)
+gain_acc.out$out
+```
+
+```{r loss_acc}
+hist(d$loss_acc)
+summary(d$loss_acc)
+loss_acc.out = boxplot.stats(d$loss_acc, do.out=TRUE)
+loss_acc.out$out
+```
+
+```{r nongain_acc}
+hist(d$nongain_acc)
+summary(d$nongain_acc)
+nongain_acc.out = boxplot.stats(d$nongain_acc, do.out=TRUE)
+nongain_acc.out$out
+```
+
+```{r nonloss_acc}
+hist(d$nonloss_acc)
+summary(d$nonloss_acc)
+nonloss_acc.out = boxplot.stats(d$nonloss_acc, do.out=TRUE)
+nonloss_acc.out$out
+```
+
+### Missed Trials
+
+```{r missed}
+summary(d$missed_count)
+summary(d$missed_percent) #same as missed_count
+plot2 = boxplot(d$missed_percent,ylab=("percent of trials when no button was pressed"))
+```
+
+**Outliers**
+```{r outliers}
+missed.out = boxplot.stats(d$missed_percent,do.out = TRUE)
+missed.out$out
+hist(d$missed_percent)
+```
+
+### Response Time
+```{r rt}
+plot3 = boxplot(rt, names = c("gain","loss","nongain","nonloss","mean"),ylab=("response time (ms)"))
+```
+
+**Gain**: mean = `r round(mean(rt$d.rt_gain),2)` ms; median = `r round(median(rt$d.rt_gain),2)` ms; min = `r round(min(rt$d.rt_gain),2)` ms; max = `r round(max(rt$d.rt_gain),2)` ms
+
+**Loss**: mean = `r round(mean(rt$d.rt_loss),2)` ms; median = `r round(median(rt$d.rt_loss),2)` ms; min = `r round(min(rt$d.rt_loss),2)` ms; max = `r round(max(rt$d.rt_loss),2)` ms
+
+**Nongain**: mean = `r round(mean(rt$d.rt_nongain),2)` ms; median = `r round(median(rt$d.rt_nongain),2)` ms; min = `r round(min(rt$d.rt_nongain),2)` ms; max = `r round(max(rt$d.rt_nongain),2)` ms
+
+**Nonloss**: mean = `r round(mean(rt$d.rt_nonloss),2)` ms; median = `r round(median(rt$d.rt_nonloss),2)` ms; min = `r round(min(rt$d.rt_nonloss),2)` ms; max = `r round(max(rt$d.rt_nonloss),2)` ms
+
+**All trials**: mean = `r round(mean(rt$d.rt_mean),2)` ms; median = `r round(median(rt$d.rt_mean),2)` ms; min = `r round(min(rt$d.rt_mean),2)` ms; max = `r round(max(rt$d.rt_mean),2)` ms
+
+```{r rt_gain}
+hist(d$rt_gain)
+summary(d$rt_gain)
+gain_rt.out = boxplot.stats(d$rt_gain, do.out=TRUE)
+gain_rt.out$out
+```
+
+```{r rt_loss}
+hist(d$rt_loss)
+summary(d$rt_loss)
+rt_loss.out = boxplot.stats(d$rt_loss, do.out=TRUE)
+rt_loss.out$out
+```
+
+```{r rt_nongain}
+hist(d$rt_nongain)
+summary(d$rt_nongain)
+rt_nongain.out = boxplot.stats(d$rt_nongain, do.out=TRUE)
+rt_nongain.out$out
+```
+
+```{r rt_nonloss}
+hist(d$rt_nonloss)
+summary(d$rt_nonloss)
+rt_nonloss.out = boxplot.stats(d$rt_nonloss, do.out=TRUE)
+rt_nonloss.out$out
+```
+
+```{rt_mean}
+hist(d$rt_mean)
+summary(d$rt_mean)
+rt_mean.out = boxplot.stats(d$rt_mean, do.out=TRUE)
+rt_mean.out$out
+```
+
+
+**After removing outliers (subs 18, 32, 39)** 
+mean total accuracy = `r round(mean(d$total_acc[-c(14,26,33)]),3)*100`%; 
+mean gain accuracy = `r round(mean(d$gain_acc[-c(14,26,33)]),3)*100`%; 
+mean loss accuracy = `r round(mean(d$loss_acc[-c(14,26,33)]),3)*100`%; 
+mean nongain accuracy = `r round(mean(d$nongain_acc[-c(14,26,33)]),3)*100`%; 
+mean nonloss accuracy = mean = `r round(mean(d$nonloss_acc[-c(14,26,33)]),3)*100`%.
+
+mean total rt = `r round(mean(rt$d.rt_mean),2)` ms;
+mean gain rt = `r round(mean(rt$d.rt_gain[-c(14,26,33)]),2)` ms;
+mean loss rt = `r round(mean(rt$d.rt_loss[-c(14,26,33)]),2)` ms;
+mean nongain rt = `r round(mean(rt$d.rt_nongain[-c(14,26,33)]),2)` ms;
+mean nonloss rt = `r round(mean(rt$d.rt_nonloss[-c(14,26,33)]),2)` ms.
+
+
+### Number of trials going into the single-subject model
+
+```{r outcome counts}
+plot4 = boxplot(counts, names = c("gain","loss","nongain","nonloss","unsucc_gain","succ_avoid_loss"), ylab="number of trials in outcome analysis per subject")
+counts.m = as.matrix(counts)
+
+
+barplot(counts.m,names.arg = c("gain","loss","nongain","nonloss","unsucc_gain","succ_avoid_loss"), ylab = "total number of trials in outcome analysis", col = " light blue", main = "Total number of trials in outcome analysis for all subjects")
+```
+
+```{r gain outcome counts}
+hist(d$gain_count)
+summary(d$gain_count)
+gain_count.out = boxplot.stats(d$gain_count, do.out=TRUE)
+gain_count.out$out
+```
+
+```{r loss outcome counts}
+hist(d$loss_count)
+summary(d$loss_count)
+loss_count.out = boxplot.stats(d$loss_count, do.out=TRUE)
+loss_count.out$out
+```
+
+```{r nongain outcome counts}
+hist(d$nongain_count)
+summary(d$nongain_count)
+nongain_count.out = boxplot.stats(d$nongain_count, do.out=TRUE)
+nongain_count.out$out
+```
+
+```{r nonloss outcome counts}
+hist(d$nonloss_count)
+summary(d$nonloss_count)
+nonloss_count.out = boxplot.stats(d$nonloss_count, do.out=TRUE)
+nonloss_count.out$out
+```
+
+Grange and Task Version Statistics 
+----------------------
+
+We made slight modifications to the kidmid task throughout the study. Each time the task was changed, we noted the version number. There are `r list(d$version[n])` versions - this variable is converted to a factor. 
+
+Additionally, the target times ("Grange") presented in the scanner were tailored to their predicted level of performance. There were 5 different levels of difficulty (1-5). This variable (Grange) is converted to an ordinal variable. Grange 1 represents the slowest target durations (easiest) and Grange 5 represents the fastest target durations (most difficult). The following statistics excludes outliers (subs 18, 32, and 39). 
+```{r }
+d1 = d[-c(14,26, 33),]
+
+d1$version = as.factor(d1$version) 
+d1$Grange = ordered(d1$Grange)
+```
+
+**Is there a relation between RT and Grange?**
+```{r}
+plot(d1$Grange, d1$rt_mean)
+cor.test(as.numeric(d1$Grange),d1$rt_mean,use="all.obs",method="spearman") #sig
+cor.test(as.numeric(d1$Grange),d1$rt_gain,use="all.obs",method="spearman") #sig
+cor.test(as.numeric(d1$Grange),d1$rt_loss,use="all.obs",method="spearman") #sig
+cor.test(as.numeric(d1$Grange),d1$rt_nongain,use="all.obs",method="spearman") #sig p = .001
+cor.test(as.numeric(d1$Grange),d1$rt_nonloss,use="all.obs",method="spearman") #sig p = .0002
+```
+Yes, highly significant for mean RT (rho = -.52, p < .0001), and p's < .001 for all conditions. The more difficult the task, the faster the RT. This is expected and uninteresting. 
+
+**Is there a relation between RT and version?**
+```{r}
+plot(d1$version, d1$rt_mean)
+#summary(lm(d1$rt_mean~d1$version + d1$Grange))
+#summary(lm(d1$rt_mean~d1$version))
+oneway.test(d1$rt_mean ~ d1$version) #p = .67
+
+plot(d1$version, d1$rt_gain)
+#summary(lm(d1$rt_gain~d1$version + d1$Grange))
+oneway.test(d1$rt_gain ~ d1$version) #p .68
+
+plot(d1$version, d1$rt_loss)
+#summary(lm(d1$rt_loss~d1$version + d1$Grange))
+oneway.test(d1$rt_loss ~ d1$version) #p = .73
+
+plot(d1$version, d1$rt_nongain)
+#summary(lm(d1$rt_nongain~d1$version + d1$Grange))
+oneway.test(d1$rt_nongain ~ d1$version) # p =.28
+
+plot(d1$version, d1$rt_nonloss)
+#summary(lm(d1$rt_nonloss~d1$version + d1$Grange))
+oneway.test(d1$rt_nonloss~ d1$version) # p = .80
+```
+No. One-way ANOVAs were performed to assess whether response time was significantly moderated by the version of the task. There is no relation between the version of the task and response times to all trials (p = .67), or response times within each condition (p's > .1).
+
+
+**Is there a relation between accuracy and Grange?**
+```{r}
+plot(d1$Grange, d1$total_acc)
+cor.test(as.numeric(d1$Grange), d1$total_acc, method="spearman")
+
+plot(d1$Grange, d1$gain_acc)
+plot(d1$Grange, d1$loss_acc)
+cor.test(as.numeric(d1$Grange), d1$gain_acc, method="spearman")
+cor.test(as.numeric(d1$Grange), d1$loss_acc, method="spearman")
+cor.test(as.numeric(d1$Grange), d1$nongain_acc, method="spearman")
+cor.test(as.numeric(d1$Grange), d1$nonloss_acc, method="spearman")
+```
+No. There is no correlation between Grange (level of difficulty) and accuracy across all trials (rho = -.15, p = .23), gain trials (rho = -.13, p = .27), loss trials (rho = -.14, p =.23), nongain trials (rho = -.16, p = .20), and nonloss trials (rho = -.19, p = .11). This is a good check that across varying levels of difficulty prescribed by the GRange, participants performed with equivalent accuracy.  
+
+**Is there a relation between accuracy and version?**
+```{r}
+plot(d1$total_acc ~ d1$version)
+oneway.test(d1$total_acc ~ d1$version) #sig
+summary(lm(d1$total_acc~d1$version + d1$Grange)) #sig
+
+plot(d1$gain_acc ~ d1$version)
+oneway.test(d1$gain_acc ~ d1$version) #sig
+summary(lm(d1$gain_acc~d1$version + d1$Grange)) #version 2 and 3 are marginally different from version 1 for gain accuracy
+
+plot(d1$loss_acc ~ d1$version)
+oneway.test(d1$loss_acc ~ d1$version) #sig
+summary(lm(d1$loss_acc~d1$version + d1$Grange)) #version 3 is more accurate on loss trials 
+
+plot(d1$nongain_acc ~ d1$version)
+oneway.test(d1$nongain_acc ~ d1$version) #sig
+summary(lm(d1$nongain_acc~d1$version + d1$Grange)) #version 3 is more accurate on nongain trials 
+
+plot(d1$nonloss_acc ~ d1$version)
+oneway.test(d1$nonloss_acc ~ d1$version) #sig
+summary(lm(d1$nonloss_acc~d1$version + d1$Grange)) #version 3 is more accurate on nonloss trials 
+
+```
+Yes, version 3 is associated with greater accuracy (hit rate) than the other versions when controlling for Grange (F(7,62) = 3.27, p = .005).  
+
+Note: The 3rd version of the task has been administered 3 times, and all times this was done with Grange 1, so Grange is highly correlated with RT for the 3rd version. Also, the 3rd version added 50 ms to each target duration, which was not mirrored in the practice, so participants who received this version (n = 3) were significantly more accurate than those who received the other versions. 

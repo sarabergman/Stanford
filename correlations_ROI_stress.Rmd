@@ -1,0 +1,120 @@
+Title
+========================================================
+
+```{r}
+setwd("~/Documents/STANFORD/FYP/STRESS/StressInterviews")
+d1 = read.csv("stress_ROI.1.28.14.csv")
+```
+
+### Anticipation -> ventral striatum cluster
+
+Cope 5: anticipation of gain > nongain
+```{r}
+rs1 = cor.test(d1$adverse.diverse.events, d1$VSTR.Cope5)
+rs2 = cor.test(d1$number.adverse.events, d1$VSTR.Cope5)
+rs3 = cor.test(d1$obj, d1$VSTR.Cope5)  ## significant p =.05, cor = -.533
+rs4 = cor.test(d1$subj, d1$VSTR.Cope5)
+rs5 = cor.test(d1$global, d1$VSTR.Cope5)
+```
+
+Cope 6: anticipation of loss > nonloss
+```{r}
+rs6 = cor.test(d1$adverse.diverse.events, d1$VSTR.Cope6)
+rs7 = cor.test(d1$number.adverse.events, d1$VSTR.Cope6)
+rs8 = cor.test(d1$obj, d1$VSTR.Cope6) 
+rs9 = cor.test(d1$subj, d1$VSTR.Cope6)
+rs10 = cor.test(d1$global, d1$VSTR.Cope6)
+```
+
+Cope 19: anticipation of gain > loss
+```{r}
+cor.test(d1$adverse.diverse.events, d1$VSTR.Cope19)
+cor.test(d1$number.adverse.events, d1$VSTR.Cope19)
+cor.test(d1$obj, d1$VSTR.Cope19)  #trending... p = .055 cor = -.522
+cor.test(d1$subj, d1$VSTR.Cope19)
+cor.test(d1$global, d1$VSTR.Cope19)
+```
+
+Cope 20: anticipation of loss > gain
+```{r}
+cor.test(d1$adverse.diverse.events, d1$VSTR.Cope20)
+cor.test(d1$number.adverse.events, d1$VSTR.Cope20)
+cor.test(d1$obj, d1$VSTR.Cope20)
+cor.test(d1$subj, d1$VSTR.Cope20)
+cor.test(d1$global, d1$VSTR.Cope20)
+```
+
+Cope 1: anticipation of gains
+```{r}
+rs11 = cor.test(d1$adverse.diverse.events, d1$VSTR.Cope1)
+rs12 = cor.test(d1$number.adverse.events, d1$VSTR.Cope1)
+rs13 = cor.test(d1$obj, d1$VSTR.Cope1) 
+rs14 = cor.test(d1$subj, d1$VSTR.Cope1)
+rs15 = cor.test(d1$global, d1$VSTR.Cope1)
+```
+
+Cope 3: anticipation of losses
+```{r}
+rs16 = cor.test(d1$adverse.diverse.events, d1$VSTR.Cope3)
+rs17 = cor.test(d1$number.adverse.events, d1$VSTR.Cope3)
+rs18 = cor.test(d1$obj, d1$VSTR.Cope3) 
+rs19 = cor.test(d1$subj, d1$VSTR.Cope3)
+rs20 = cor.test(d1$global, d1$VSTR.Cope3)
+```
+
+### Outcome -> mPFC/dACC cluster
+
+Cope 13: gain > nongain
+```{r}
+rs21 = cor.test(d1$adverse.diverse.events, d1$dACC.Cope13)
+rs22 = cor.test(d1$number.adverse.events, d1$dACC.Cope13)
+rs23 = cor.test(d1$obj, d1$dACC.Cope13) 
+rs24 = cor.test(d1$subj, d1$dACC.Cope13)
+rs25 = cor.test(d1$global, d1$dACC.Cope13)
+```
+
+Cope 14: loss > nonloss
+```{r}
+rs26 = cor.test(d1$adverse.diverse.events, d1$dACC.Cope14)
+rs27 = cor.test(d1$number.adverse.events, d1$dACC.Cope14)
+rs28 = cor.test(d1$obj, d1$dACC.Cope14)
+rs29 = cor.test(d1$subj, d1$dACC.Cope14)
+rs30 = cor.test(d1$global, d1$dACC.Cope14)
+```
+
+Cope 21: gain > loss
+```{r}
+rs31 = cor.test(d1$adverse.diverse.events, d1$dACC.Cope21)
+rs32 = cor.test(d1$number.adverse.events, d1$dACC.Cope21)
+rs33 = cor.test(d1$obj, d1$dACC.Cope21)
+rs34 = cor.test(d1$subj, d1$dACC.Cope21)
+rs35 = cor.test(d1$global, d1$dACC.Cope21)
+```
+
+Cope 22: loss > gain
+```{r}
+rs36 = cor.test(d1$adverse.diverse.events, d1$dACC.Cope22)
+rs37 = cor.test(d1$number.adverse.events, d1$dACC.Cope22)
+rs38 = cor.test(d1$obj, d1$dACC.Cope22)
+rs39 = cor.test(d1$subj, d1$dACC.Cope22)
+rs40 = cor.test(d1$global, d1$dACC.Cope22)
+```
+
+Cope 9: gain
+```{r}
+rs41 = cor.test(d1$adverse.diverse.events, d1$dACC.Cope9)
+rs42 = cor.test(d1$number.adverse.events, d1$dACC.Cope9)
+rs43 = cor.test(d1$obj, d1$dACC.Cope9)
+rs44 = cor.test(d1$subj, d1$dACC.Cope9)  ## trending p = .07, cor = -.491
+rs45 = cor.test(d1$global, d1$dACC.Cope9)  ## p = .052, cor = -.53
+```
+
+Cope 11: loss
+```{r}
+rs46 = cor.test(d1$adverse.diverse.events, d1$dACC.Cope11)
+rs47 = cor.test(d1$number.adverse.events, d1$dACC.Cope11)
+rs48 = cor.test(d1$obj, d1$dACC.Cope11)
+rs49 = cor.test(d1$subj, d1$dACC.Cope11)
+rs50 = cor.test(d1$global, d1$dACC.Cope11)  
+```
+

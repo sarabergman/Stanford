@@ -1,0 +1,154 @@
+MPFC, ELS, and Social Support
+========================================================
+
+```{r nacc load in data}
+require(ggplot2)
+setwd("~/Box Sync/9.9.14/58N_maineffect_HOatlas_union/")  
+mpfc = read.csv("ant+out_58subs_mPFC09-Sep-2014.csv") #mPFC - conjuntion of H-O atlas with cope13 (gain > nongain)
+```
+
+```{r nacc image}
+library("png")
+library("grid")
+mpfc.png = readPNG("~/Box Sync/9.9.14/58N_maineffect_HOatlas_union/mpfc.png")
+  grid.raster(mpfc.png)
+```
+
+```{r boxplot mpfc}
+boxplot(mpfc$antgain, mpfc$antloss, mpfc$antnongain, mpfc$antnonloss, mpfc$gain, mpfc$loss, mpfc$nongain, mpfc$nonloss, names = c("antgain","antloss","antnongain","antnonloss","gain","loss","nongain","nonloss"), ylab=("percent signal change in mpfc"), las =2)
+```
+
+```{r mpfc bar}
+#create dataframe to make bargraphs
+mpfc.pe = c(mpfc$antgain,mpfc$antloss,mpfc$antnongain,mpfc$antnongain,mpfc$gain, mpfc$loss, mpfc$nongain, mpfc$nonloss)
+condition.2 = c(rep(x = "antgain", times = 58), rep(x = "antloss", times = 58), rep(x = "antnongain", times = 58), rep(x = "antnonloss", times = 58),rep(x = "gain", times = 58), rep(x = "loss", times = 58), rep(x = "nongain", times = 58), rep(x = "nonloss", times = 58))
+mpfcbar = data.frame(condition.2,mpfc.pe)
+
+mpfc.summary = data.frame(
+  condition = levels(mpfcbar$condition.2),
+  mean = tapply(mpfcbar$mpfc.pe, mpfcbar$condition, mean),
+  n = tapply(mpfcbar$mpfc.pe, mpfcbar$condition, length),
+  sd = tapply(mpfcbar$mpfc.pe, mpfcbar$condition, sd)
+  )
+
+#calculate standard error of the mean 
+mpfc.summary$sem = mpfc.summary$sd/sqrt(mpfc.summary$n) 
+
+#calculate margin of error for CI
+alpha = .05 #95% confidence interval
+mpfc.summary$me = qt(1-alpha/2, df = mpfc.summary$n)*mpfc.summary$sem
+
+#error bars represent 95% CI
+#png('barplot.CI.vSTR.anticipation.png')
+g3.CI = ggplot(mpfc.summary, aes(x = condition, y = mean)) + 
+  geom_bar(position = position_dodge(), stat="identity", fill="blue", width=.5) +
+  geom_errorbar(aes(ymin=mean-me, ymax=mean+me), width=.3) +
+  ggtitle("Reward-Related mpfc Activity / (Error bars represent 95% CI)") + # plot title
+  geom_hline(yintercept=0, linetype = 1) +
+  labs(x = "Anticipation and Outcome", y = "Percent BOLD signal change in mpfc") +
+  theme_bw() +
+  #theme_classic()
+  theme(panel.grid.major = element_blank()) # remove x and y major grid lines
+print(g3.CI)
+#dev.off()
+
+#error bars represent standard error of the mean
+g3.SE = ggplot(mpfc.summary, aes(x = condition, y = mean)) + 
+  geom_bar(position = position_dodge(), stat="identity", fill="blue", width=.5) +
+  geom_errorbar(aes(ymin=mean-sem, ymax=mean+sem), width=.3) +
+  labs(x = "Anticipation and Outcome", y = "Percent BOLD signal change in mpfc") +
+  ggtitle("Reward-Related mpfc Activity / (Error bars represent SEM)") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank())
+print(g3.SE)
+```
+
+
+### Anticipation
+```{r mpfc cor ant}
+cor.test(mpfc$antgain, mpfc$TotEventsExpUSE) #ns
+cor.test(mpfc$antgain, mpfc$TotNumCategUSE) #ns
+cor.test(mpfc$antgain, mpfc$TotChildSubjRatUSE) #ns
+plot(mpfc$antgain, mpfc$TotEventsExpUSE) # example plot, no relation
+
+cor.test(mpfc$antloss, mpfc$TotEventsExpUSE) #ns
+cor.test(mpfc$antloss, mpfc$TotNumCategUSE) #ns
+cor.test(mpfc$antloss, mpfc$TotChildSubjRatUSE) #ns
+
+cor.test(mpfc$antgain, mpfc$ss.total) #ns
+cor.test(mpfc$antloss, mpfc$ss.total) #r = .25, p = .065
+
+mpfc$antgainvnongain = mpfc$antgain - mpfc$antnongain
+mpfc$antlossvnonloss = mpfc$antloss - mpfc$antnonloss
+
+cor.test(mpfc$antgainvnongain,mpfc$TotEventsExpUSE) #ns
+cor.test(mpfc$antgainvnongain, mpfc$TotNumCategUSE) #ns
+cor.test(mpfc$antgainvnongain, mpfc$TotChildSubjRatUSE) #ns
+cor.test(mpfc$antgainvnongain, mpfc$ss.total) #ns
+
+#summary(lm(mpfc$TotChildSubjRatUSE ~ mpfc$antgainvnongain)) #same as above
+
+plot(mpfc$antlossvnonloss, mpfc$TotEventsExpUSE)
+cor.test(mpfc$antlossvnonloss,mpfc$TotEventsExpUSE) #ns
+cor.test(mpfc$antlossvnonloss, mpfc$TotNumCategUSE) #ns
+cor.test(mpfc$antlossvnonloss, mpfc$TotChildSubjRatUSE) #ns
+
+summary(lm(mpfc$antlossvnonloss ~ mpfc$TotEventsExpUSE * mpfc$Sex)) #ns
+summary(lm(mpfc$antlossvnonloss ~ mpfc$TotEventsExpUSE * mpfc$Age.at.scan)) #ns
+```
+**Main effect of ELS on anticipation of loss > nonloss in mPFC when considering the interactive effect with age...**
+
+```{r}
+summary(lm(mpfc$antlossvnonloss ~ mpfc$ss.total))
+summary(lm(mpfc$antlossvnonloss ~ mpfc$ss.total + mpfc$Sex))
+summary(lm(mpfc$antlossvnonloss ~ mpfc$ss.total + mpfc$Age.at.scan))
+
+summary(lm(mpfc$antlossvnonloss ~ mpfc$ss.total * mpfc$TotEventsExpUSE, na.action = na.omit))
+summary(lm(mpfc$antlossvnonloss ~ mpfc$ss.total * mpfc$TotNumCategUSE, na.action = na.omit))
+summary(lm(mpfc$antlossvnonloss ~ mpfc$ss.total * mpfc$TotChildSubjRatUSE, na.action = na.omit))
+```
+
+
+###Outcome
+
+```{r mpfc cor outcome}
+plot(mpfc$gain,mpfc$TotChildSubjRatUSE)
+cor.test(mpfc$gain, mpfc$TotEventsExpUSE) #ns
+cor.test(mpfc$gain, mpfc$TotNumCategUSE) #ns
+cor.test(mpfc$gain, mpfc$TotChildSubjRatUSE) #ns
+
+cor.test(mpfc$loss, mpfc$TotEventsExpUSE) #ns
+cor.test(mpfc$loss, mpfc$TotNumCategUSE) #ns
+cor.test(mpfc$loss, mpfc$TotChildSubjRatUSE) #ns
+
+mpfc$gainvnongain = mpfc$gain - mpfc$nongain
+mpfc$lossvnonloss = mpfc$loss - mpfc$nonloss
+
+cor.test(mpfc$gainvnongain,mpfc$TotEventsExpUSE) 
+cor.test(mpfc$gainvnongain, mpfc$TotNumCategUSE) 
+cor.test(mpfc$gainvnongain, mpfc$TotChildSubjRatUSE) 
+
+cor.test(mpfc$lossvnonloss,mpfc$TotEventsExpUSE) #ns
+cor.test(mpfc$lossvnonloss, mpfc$TotNumCategUSE) #ns
+cor.test(mpfc$lossvnonloss, mpfc$TotChildSubjRatUSE) #ns
+```
+
+
+```{r}
+summary(lm(mpfc$gainvnongain ~ mpfc$TotEventsExpUSE * mpfc$ss.total, na.action = na.omit)) #ns
+summary(lm(mpfc$gainvnongain ~ mpfc$TotNumCategUSE * mpfc$Sex)) #same pattern as NAcc and insula
+
+m1 = lm(gainvnongain ~ TotNumCategUSE + Sex + TotNumCategUSE:Sex, data=mpfc)
+gp = ggplot(data = mpfc, aes(x=TotNumCategUSE, y = gainvnongain, color=factor(Sex)))
+gp + geom_point(size=4) + stat_smooth(method="lm")
+```
+**MPFC shows the same pattern of activation for outcome of gains > nongain with respect to the interaction between ELS and gender, however, here the effects are not statistically significant.**
+
+```{r}
+summary(lm(mpfc$lossvnonloss ~ mpfc$TotChildSubjRatUSE * mpfc$Age.at.scan)) #ns
+summary(lm(mpfc$lossvnonloss ~ mpfc$TotChildSubjRatUSE + mpfc$Age.at.scan)) #ns
+
+summary(lm(mpfc$lossvnonloss ~ mpfc$ss.total)) #ns
+summary(lm(mpfc$lossvnonloss ~ mpfc$ss.total * mpfc$TotNumCategUSE)) #ns
+```
