@@ -1,0 +1,10 @@
+/ContrastName1	V1-V2 
+/ContrastName2	V2-V1 
+/NumWaves	2
+/NumContrasts	2
+/PPheights		1.000000e+00	1.000000e+00
+/RequiredEffect		1.210	1.210
+
+/Matrix
+1.000000e+00 -1.000000e+00 
+-1.000000e+00 1.000000e+00 

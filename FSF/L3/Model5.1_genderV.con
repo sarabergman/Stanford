@@ -1,0 +1,12 @@
+/ContrastName1	group mean 
+/ContrastName2	gender pos 
+/ContrastName3	gender neg 
+/NumWaves	3
+/NumContrasts	3
+/PPheights		1.000016e+00	1.000000e+00	1.000000e+00
+/RequiredEffect		0.468	1.045	1.045
+
+/Matrix
+1.000000e+00 0.000000e+00 0.000000e+00 
+0.000000e+00 1.000000e+00 0.000000e+00 
+0.000000e+00 -1.000000e+00 0.000000e+00 

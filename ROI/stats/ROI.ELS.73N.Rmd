@@ -7,12 +7,12 @@ Relations between Neural Regions and ELS during Anticipation of Gains and Losses
 ========================================================
 ```{r load in data}
 require(ggplot2)
-#setwd("~/Documents/ELS/KIDMID/Analysis/ROI/73N_ELS")
-setwd("/Volumes/TUXEDOSAM/73N_ELS/")
+setwd("~/Documents/ELS/KIDMID/Analysis/ROI/73N_ELS")
+#setwd("/Volumes/TUXEDOSAM/73N_ELS/")
 a = read.csv("featquery_anticipation09-Feb-2015.csv")
 o = read.csv("featquery_outcome09-Feb-2015.csv")
-#setwd("~/Documents/ELS/KIDMID/Analysis/behavior")
-setwd("/Volumes/TUXEDOSAM/")
+setwd("~/Documents/ELS/KIDMID/Analysis/behavior")
+#setwd("/Volumes/TUXEDOSAM/")
 b = read.csv("all_behavior_10-Feb-2015.csv")
 
 #removing behavioral outliers
@@ -38,7 +38,7 @@ cor.test(a$Lins_loss - a$Lins_nonloss,b$ELS.subj)
 
 
 d = cbind(b,a) #merge data frames
-d2 = d[-c(5,7,31),]
+d2 = d[-c(5,7,31),] #ELS outliers?
 d$gender = factor(d$gender)
 d2$gender = factor(d2$gender)
 d3$gender = factor(d3$gender)
@@ -75,6 +75,7 @@ summary(lm(d$Rcaud_loss-d$Rcaud_nonloss ~ (d$ELS.subj * d$gender) + d$v2 + d$rt_
 summary(d$ELS.subj) 
 d$ELS.subjcat1 = cut(d$ELS.subj, c(0,5,10,30), right=FALSE) #3 groups= 0-4, 5-10, 11-30
 d$ELS.subjcat2 = cut(d$ELS.subj, c(0,5,10,30), right=FALSE, labels=c("low","int","high")) 
+d$ELS.subjcat3 = cut(d$ELS.subj, c(0,5,30), right=FALSE, labels=c("low","high"))
 table(d$ELS.subjcat2)
 
 table(d$gender, d$ELS.subjcat2)
@@ -99,6 +100,95 @@ summary(lm(d$rt_loss-d$rt_nonloss ~ d$ELS.subj)) #p = .004, high ELS p's are slo
 qplot(d$ELS.subj,d$rt_loss-d$rt_nonloss)
 summary(lm(d$rt_loss-d$rt_nonloss ~ d$ELS.subjcat2)) #p=.04 for high v low.
 
+```
+
+Right NAcc
+-------------
+```{r NAcc}
+##MAIN EFFECTS ONLY
+#create dataframe to make bargraphs for main effects 
+Rnacc.pe = c(d$Rnacc_gain,d$Rnacc_nongain,d$Rnacc_loss,d$Rnacc_nonloss)
+condition.2 = c(rep(x = "gain", times = 73), rep(x = "nongain", times = 73), rep(x = "loss", times = 73), rep(x = "nonloss", times = 73))
+Rnaccbar = data.frame(condition.2,Rnacc.pe)
+
+Rnacc.summary = data.frame(
+  condition = levels(Rnaccbar$condition.2),
+  mean = tapply(Rnaccbar$Rnacc.pe, Rnaccbar$condition, mean),
+  n = tapply(Rnaccbar$Rnacc.pe, Rnaccbar$condition, length),
+  sd = tapply(Rnaccbar$Rnacc.pe, Rnaccbar$condition, sd)
+  )
+
+#calculate standard error of the mean 
+Rnacc.summary$sem = Rnacc.summary$sd/sqrt(Rnacc.summary$n) 
+
+#calculate margin of error for CI
+alpha = .05 #95% confidence interval
+Rnacc.summary$me = qt(1-alpha/2, df = Rnacc.summary$n)*Rnacc.summary$sem
+
+#error bars represent standard error of the mean
+g2.SE = ggplot(Rnacc.summary, aes(x = condition, y = mean)) + 
+  geom_bar(position = position_dodge(), stat="identity", fill="red", width=.5) +
+  geom_errorbar(aes(ymin=mean-sem, ymax=mean+sem), width=.3) +
+  labs(x = "Anticipation", y = "Percent BOLD signal change in R NAcc") +
+  #scale_y_continuous(limits=c(-.3, .4)) +
+  ggtitle("Anticipatory R NAcc Activity") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank())
+print(g2.SE)
+
+###ELS EFFECTS
+#rearrange data to make bargraphs for ELS and condition effects 
+#ELScond = c(rep(x=d$ELS.subjcat2, times = 4)) #rep d$ELS.subjcat2 vector 4 times
+ELScond = c(rep(x=d$ELS.subjcat3, times = 4))
+Rnaccbar.els = data.frame(condition.2,Rnacc.pe,ELScond) #concatenate vectors
+Rnacc.means = aggregate(Rnaccbar.els$Rnacc.pe, list(ELS = Rnaccbar.els$ELScond, cond = Rnaccbar.els$condition.2), mean) #sort pe means by condition and ELS cat
+Rnacc.sd = aggregate(Rnaccbar.els$Rnacc.pe, list(ELS = Rnaccbar.els$ELScond, cond = Rnaccbar.els$condition.2), sd)
+Rnacc.n = aggregate(Rnaccbar.els$Rnacc.pe, list(ELS = Rnaccbar.els$ELScond, cond = Rnaccbar.els$condition.2), length)
+
+Rnacc.summary.els = data.frame(
+  Rnacc.means,  #x = mean
+  sd = Rnacc.sd[3], #x.1 = sd
+  n = Rnacc.n[3]) #x.2 = n
+
+#calculate standard error of the mean 
+Rnacc.summary.els$sem = Rnacc.summary.els$x.1/sqrt(Rnacc.summary.els$x.2) 
+factor(Rnacc.summary.els$ELS)
+#Rnacc.summary.els$ELS = c(rep(c("low","int","high"), times = 4))
+Rnacc.summary.els$ELS = c(rep(c("low", "high"), times = 4))
+
+limits = aes(ymin=x-sem, ymax=x+sem)
+g2.ELS = ggplot(Rnacc.summary.els, aes(x = cond, y = x, fill = ELS)) +  
+  geom_bar(stat="identity",position=position_dodge(), width = .75) +
+  geom_errorbar(limits,position=position_dodge(width=.75), width = .5) +
+  labs(x = "Anticipation", y = "% BOLD signal change") +
+  #scale_y_continuous(limits=c(-.35, .5)) +
+  ggtitle("Anticipatory R NAcc Activity") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank())
+print(g2.ELS)
+
+summary(lm(d$Rnacc_loss-d$Rnacc_nonloss ~ d$ELS.subj + d$v2 + d$gender + d$rt_loss-d$rt_nonloss))
+summary(lm(d$Rnacc_loss-d$Rnacc_nonloss ~ d$ELS.subj + d$v2))
+summary(lm(d$Rnacc_loss-d$Rnacc_nonloss ~ (d$ELS.subj * d$gender) + d$v2))
+cor.test(d$Rnacc_gain-d$Rnacc_nongain, d$ELS.subj)
+cor.test(d$Rnacc_loss, d$ELS.subj)
+
+summary(lm(d$Rnacc_gain-d$Rnacc_nongain ~ (d$gender + d$v2) * d$ELS.subjcat3))
+summary(lm(d$Rnacc_gain-d$Rnacc_nongain ~ d$gender * d$ELS.subjcat3 + d$v2))
+summary(lm(d$Rcaud_loss-d$Rcaud_nonloss ~ d$gender + d$v2))
+
+#gain v nongain
+cor.test(d$Rnacc_gain-d$Rnacc_nongain, d$ELS.subj)
+summary(lm(d$Rnacc_gain-d$Rnacc_nongain ~ d$ELS.subj + d$v2))
+
+summary(lm(d$Rnacc_gain-d$Rnacc_nongain ~ poly(d$ELS.subj,2) + d$v2))
+summary(lm(d$Rnacc_gain-d$Rnacc_nongain ~ d$ELS.subjcat2 + d$v2))
+
+#success
+summary(lm(d$Rnacc_loss-d$Rnacc_nonloss ~ d$ELS.subj + d$total_acc  + d$v2))
+summary(lm(d$Rnacc_loss-d$Rnacc_nonloss ~ d$ELS.subj + d$loss_acc-d$nonloss_acc  + d$v2))
 ```
 
 
@@ -441,7 +531,7 @@ print(c2)
 
 #gain v nongain
 cor.test(d$Rput_gain-d$Rput_loss, d$ELS.subj)
-summary(lm(d$Rput_gain-d$Rput_nongain ~ d$ELS.subj))
+summary(lm(d$Rput_gain-d$Rput_nongain ~ d$ELS.subj * d$gender + d$v2))
 summary(lm(d$Rput_gain-d$Rput_nongain ~ d$ELS.subjcat2 + d$gender + d$v2))
 
 #success

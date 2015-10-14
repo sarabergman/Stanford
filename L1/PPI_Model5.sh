@@ -10,7 +10,7 @@
 
 #sub list includes all subs that have no empty EVS (excludes 012, 016, 086, and 089)
 #for SUBJ in 001 002 003 004 005 006 009 010 013 014 017 020 021 022 023 024 025 026 028 029 030 031 033 034 035 036 037 038 039 040 041 042 045 046 047 048 049 050 054 055 056 057 058 059 060 061 062 064 065 067 068 069 070 072 073 074 075 076 077 079 081 083 085 087 088 090 093 095; do
-for SUBJ in 089 090 097 099 100; do
+for SUBJ in 001; do
 #SUBJ=$1
 SMOOTH=5
 GO=1
@@ -34,7 +34,7 @@ PRESTATSREGDIR=$PRESTATSDIR/reg
 
 DATA=${PRESTATSDIR}/filtered_func_data.nii.gz
 
-MAINOUTPUT=${MAINDIR}/L1/PPI/RightNAcc.Model5.BothPPI
+MAINOUTPUT=${MAINDIR}/L1/PPI/thresh_RightNAcc.Model5.BothPPI
 mkdir -p ${MAINOUTPUT}
 #fi
 
@@ -62,15 +62,15 @@ ROIDIR=${MAINDIR}/ROI/PPI
 #S02brain_BET_5_pve_0_thr_func
 
 #transform the standard-space ROI to individual space using FLIRT
-flirt -in ${ROIDIR}/thresh_rightNAcc.nii.gz -applyxfm -init ${PRESTATSDIR}/reg/standard2example_func.mat -out ${NativeSpaceROIs}/thresh_right_accumbens_tranformed.nii.gz -ref ${PRESTATSDIR}/example_func
+flirt -in ${ROIDIR}/75_NAcc_thresh.nii.gz -applyxfm -init ${PRESTATSDIR}/reg/standard2example_func.mat -out ${NativeSpaceROIs}/75thresh_right_accumbens_tranformed.nii.gz -ref ${PRESTATSDIR}/example_func
 
 #re-binarize the mask after transformation
-fslmaths ${NativeSpaceROIs}/thresh_right_accumbens_tranformed.nii.gz -bin ${NativeSpaceROIs}/thresh_right_accumbens_tranformed.nii.gz
+fslmaths ${NativeSpaceROIs}/75thresh_right_accumbens_tranformed.nii.gz -bin ${NativeSpaceROIs}/75thresh_right_accumbens_tranformed_bin.nii.gz
 
 
 #fslmeants -i filtered_func.nii.gz -o my_timecourse.txt -m your_roi_mask.nii.gz
-fslmeants -i $DATA -o ${TIMECOURSEFILES}/RightNAcc_timecourse.txt -m ${NativeSpaceROIs}/thresh_right_accumbens_tranformed.nii.gz
-#fslmeants -i $DATA -o ${TIMECOURSEFILES}/LeftNAcc_timecourse.txt -m ${ROIDIR}/left_accumbens.nii.gz
+fslmeants -i $DATA -o ${TIMECOURSEFILES}/75RightNAcc_thresh_timecourse.txt -m ${NativeSpaceROIs}/75thresh_right_accumbens_tranformed_bin.nii.gz
+
 
 
 EVFILES=${MAINDIR}/EV/${SUBJ}/PPI.antgain
@@ -89,14 +89,14 @@ ev8=${EVFILES}/${SUBJ}_nonloss.txt
 ev9=${EVFILES}/${SUBJ}_unsucc_gain.txt
 ev010=${EVFILES}/${SUBJ}_succ_avoid_loss.txt
 ev011=${EVFILES}/${SUBJ}_target_all.txt
-ev012=${EVFILES}/${SUBJ}_missed.txt
-ev013=${TIMECOURSEFILES}/RightNAcc_timecourse.txt
+#ev012=${EVFILES}/${SUBJ}_missed.txt
+ev013=${TIMECOURSEFILES}/75RightNAcc_thresh_timecourse.txt
 
 if [ $(hostname) = sbergman.stanford.edu ];
 then 
-	TEMPLATE=/Users/sarabergman/Documents/ELS/KIDMID/scripts/FSF/PPI/Model5_antgain_negPPI.fsf
+	TEMPLATE=/Users/sarabergman/Documents/ELS/KIDMID/scripts/FSF/PPI/Model5_antgain_threshNAcc_nomiss.fsf
 else
-	TEMPLATE=/Users/sarabergman/Documents/STANFORD/FYP/KIDMID/scripts/FSF/PPI/Model5_antgain_negPPI.fsf
+	TEMPLATE=/Users/sarabergman/Documents/STANFORD/FYP/KIDMID/scripts/FSF/PPI/Model5_antgain_threshNAcc_nomiss.fsf
 fi	
 
 #dos2unix $TEMPLATE
@@ -113,7 +113,7 @@ sed -e 's@OUTPUT@'$OUTPUT'@g' \
 -e 's@ev9@'$ev9'@g' \
 -e 's@ev010@'$ev010'@g' \
 -e 's@ev011@'$ev011'@g' \
--e 's@ev012@'$ev012'@g' \
+# -e 's@ev012@'$ev012'@g' \
 -e 's@ev013@'$ev013'@g' \
 -e 's@CONFOUNDEVSFILE@'$CONFOUNDEVSFILE'@g' \
 -e 's@VOLUMES@'$VOLUMES'@g' \

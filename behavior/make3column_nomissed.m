@@ -7,13 +7,13 @@
 % trials. when in doubt, run both scripts.
 
 % allsubs_behavior.m compiles the behavioral output of this script for every subject.
-%maindir = '/Users/sarabergman/Documents/ELS/KIDMID/';
-maindir = '/Volumes/ELS/KIDMID';
+maindir = '/Users/sarabergman/Documents/ELS/KIDMID/';
+%maindir = '/Volumes/ELS/KIDMID';
 
 % sublist = {'001','002','003','004', '005', '006', '008', '009', '010', '011', '012', '013', '014', '015','016', '017', '018','019','020', ...
 %     '021','022','023','024','024','025','026','028','029','030','031','032','033','034','035','036','037','038','039','040','041','042', ...
 %     '043','045','046','047','048','049','050','051','054','055','056','058','059','060','061','062','064','065','067','068','069'};  
-sublist = {'103'};  
+sublist = {'091','106','107','108','112','113','114','116','121'};  
 
 for s = 1:length(sublist)
     subID = sublist{s};

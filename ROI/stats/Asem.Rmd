@@ -1,0 +1,711 @@
+---
+title: "ASEM"
+output: html_document
+---
+```{r}
+setwd("/Volumes/sarabergman/Documents/ELS/KIDMID/Analysis/behavior")
+setwd("~/Documents/ELS/KIDMID/Analysis/behavior")
+b = read.csv("master_behavior_0511_asem.csv")
+```
+
+```{r}
+hist(b$rt_gain)
+boxplot(b$rt_gain)
+hist(b$rt_loss)
+boxplot(b$rt_loss)
+hist(b$rt_nonloss)
+hist(b$rt_nonloss)
+
+boxplot(data.frame(b$rt_gain,b$rt_loss,b$rt_nongain,b$rt_nonloss,b$rt_mean), names = c("gain","loss","nongain","nonloss","mean"),ylab=("response time (ms)"), do.out = TRUE)
+out1 = boxplot.stats(b$rt_nongain, do.out=TRUE)
+out1
+##sub 010 is an outlier on rt_nongain
+
+
+rt = data.frame(b$rt_gain,b$rt_loss,b$rt_nongain,b$rt_nonloss)
+rt = stack(rt)
+rt = rt[-176, ] #outlier
+
+
+#create barplot
+rt_means = c(mean(b$rt_gain),mean(b$rt_loss),mean(b$rt_nongain),mean(b$rt_nonloss))
+rt_sd = c(sd(b$rt_gain),sd(b$rt_loss),sd(b$rt_nongain),sd(b$rt_nonloss))
+par(mfrow=c(1,1))
+bp1 = barplot(rt_means, names.arg = c("gain","loss","nongain","nonloss"), main = "Response Time", ylim=c(0,300))
+mean(b$rt_mean)
+sd(b$rt_mean)
+
+rt.summary = data.frame(
+  condition = levels(rt$ind),
+  mean = tapply(rt$values, rt$ind, mean),
+  n = tapply(rt$values, rt$ind, length),
+  sd = tapply(rt$values, rt$ind, sd)
+  )
+
+#calculate standard error of the mean 
+rt.summary$sem = rt.summary$sd/sqrt(rt.summary$n) 
+
+#error bars represent standard error of the mean
+g2.SE = ggplot(rt.summary, aes(x = condition, y = mean)) + 
+  geom_bar(position = position_dodge(), stat="identity", fill="purple", width=.8) +
+  geom_errorbar(aes(ymin=mean-sem, ymax=mean+sem), width=.2) +
+  labs(x = " ", y = " ") + 
+  ggtitle(" ") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme(panel.grid.major = element_blank(), axis.text=element_text(size = 16))
+print(g2.SE)
+
+oneway.test(values ~ ind, var.equal=FALSE, data=rt)
+#F(3,331) = 4.461, p = .005
+#sig difference between a condition and grand mean
+bartlett.test(rt)
+#variances are not the same
+oneway.test(values ~ ind, var.equal=FALSE, data=rt2)
+
+aov1 = aov(values ~ ind, data=rt)  #doesnt account for inhomogeneity in variances
+anova(lm(values ~ ind, data=rt)) #same here
+
+summary(lm(rt$values ~ rt$ind))  #this doesnt account for inhomogeneity in variances, but it shows the t-tests for each condition against rt_gain 
+
+#with outlier removed:
+bartlett.test(b$rt_gain, b$rt_nongain)
+t.test(b$rt_gain,b$rt_nongain, var.equal = FALSE)
+#t(152.94) = -3.22, p = .002
+t.test(b$rt_gain,b$rt_nonloss, var.equal = FALSE)
+#t(163.69) = -3.06, p = .003
+t.test(b$rt_gain,b$rt_loss, var.equal = FALSE)
+#t(164.86) = -1.36, p = .18
+t.test(b$rt_loss,b$rt_nonloss, var.equal = FALSE)
+#t(165.79) = -1.66, p = .10
+t.test(b$rt_loss,b$rt_nongain, var.equal = FALSE)
+#t(158.70) = -1.96, p = .05
+
+
+
+t.test(c(b$rt_gain,b$rt_loss),c(b$rt_nongain,b$rt_nonloss))
+#sig diff between incentive and nonincentive trials
+#p = .0006, t = -3.49
+d$incentive.rt = d$rt_gain + d$rt_loss
+d$nonincentive.rt = d$rt_nongain + d$rt_nonloss
+
+#ELS.................
+
+cor.test(d$ELS.subj,d$rt_loss-d$rt_nonloss) #p=.03
+cor.test(d$ELS.subj,d$rt_gain-d$rt_nongain) #p=.02
+cor.test(d$ELS.subj,d$rt_loss)
+cor.test(d$ELS.subj,d$rt_nonloss)
+cor.test(d$ELS.subj,d$rt_mean)
+
+
+d$rtgainvnongain = d$rt_gain-d$rt_nongain
+c1 = ggplot(d, aes(x=ELS.subj, y=rtgainvnongain)) + 
+    geom_point(size=4) + 
+    labs(x = "ELS", y = "Difference in RT between gain and nongain") +
+    geom_smooth(method=lm)
+print(c1)
+
+
+d$rtlossvnonloss = d$rt_loss-d$rt_nonloss
+c3 = ggplot(d, aes(x=ELS.subj, y=rtlossvnonloss)) + 
+    geom_point(size=5.5, col="black") + 
+    labs(x = " ", y = " ") +
+    geom_smooth(method=lm, col="black") + 
+    theme_bw() +
+    theme(axis.text.y=element_text(size=20)) +
+    theme(axis.text.x=element_text(size=20))
+print(c3)
+
+hi.l = c(d$rtlossvnonloss[d$ELS.subjcat3=="high"])
+mean(hi.l)
+lo.l = c(d$rtlossvnonloss[d$ELS.subjcat3=="low"])
+mean(lo.l)
+t.test(hi.l,lo.l)
+
+
+
+```
+
+```{r}
+setwd("/Volumes/sarabergman/Documents/ELS/KIDMID/Analysis/ROI/84N_ELS")
+setwd("~/Documents/ELS/KIDMID/Analysis/ROI/84N_ELS")
+a = read.csv("featquery_anticipation13-May-2015.csv")
+o = read.csv("featquery_outcome13-May-2015.csv")
+d = cbind(b,a,o) #merge data frames
+as.factor(d$v2)
+```
+
+```{r ELS}
+#convert ELS from continuous to categorical
+summary(d$ELS.subj) 
+d$ELS.subjcat1 = cut(d$ELS.subj, c(0,5,10,30), right=FALSE) #3 groups= 0-4, 5-10, 11-30
+d$ELS.subjcat2 = cut(d$ELS.subj, c(0,5,10,30), right=FALSE, labels=c("low","int","high")) 
+d$ELS.subjcat3 = cut(d$ELS.subj, c(0,5,30), right=FALSE, labels=c("low","high"))
+table(d$ELS.subjcat3)
+
+hist(d$ELS.subj, breaks = c(0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30))
+histcolors = c("deepskyblue","deepskyblue",(rep(x = "tomato",times = 14)))
+hist(d$ELS.subj, breaks = c(0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30), xlab=" ", border="black", col=histcolors, ylab = "  ", main= "  ")
+
+table(d$gender, d$ELS.subjcat3)
+chisq.test(d$gender, d$ELS.subjcat3)
+
+table(d$v1, d$ELS.subjcat2)
+chisq.test(d$v1, d$ELS.subjcat2)
+
+table(d$v2, d$ELS.subjcat2)
+chisq.test(d$v2, d$ELS.subjcat2)
+
+table(d$Grange, d$ELS.subjcat2)
+chisq.test(d$Grange, d$ELS.subjcat2)
+
+#accuracy
+summary(lm(d$loss_acc ~ d$ELS.subj))
+summary(lm(d$loss_acc-d$nonloss_acc ~ d$ELS.subj))
+
+#rt
+summary(lm(d$rt_loss ~ d$ELS.subj)) #ns
+summary(lm(d$rt_loss-d$rt_nonloss ~ d$ELS.subj)) #p = .004, high ELS p's are slower to loss relative to nonloss cues
+qplot(d$ELS.subj,d$rt_loss-d$rt_nonloss)
+summary(lm(d$rt_loss-d$rt_nonloss ~ d$ELS.subjcat2)) #p=.04 for high v low.
+
+```
+
+
+```{r}
+cor.test(a$Lput_antloss,b$ELS.subj) 
+cor.test(a$Lput_antloss-a$Lput_antnonloss, b$ELS.subj) #r = .28, p = .009
+```
+
+
+Right Putamen
+-------------------
+```{r Rput}
+#create dataframe to make bargraphs
+Rput.pe = c(d$Rput_antgain,d$Rput_antnongain,d$Rput_antloss,d$Rput_antnonloss)
+condition.2 = c(rep(x = "gain", times = 84), rep(x = "nongain", times = 84), rep(x = "loss", times = 84), rep(x = "nonloss", times = 84))
+Rputbar = data.frame(condition.2,Rput.pe)
+
+Rput.summary = data.frame(
+  condition = levels(Rputbar$condition.2),
+  mean = tapply(Rputbar$Rput.pe, Rputbar$condition, mean),
+  n = tapply(Rputbar$Rput.pe, Rputbar$condition, length),
+  sd = tapply(Rputbar$Rput.pe, Rputbar$condition, sd)
+  )
+
+#calculate standard error of the mean 
+Rput.summary$sem = Rput.summary$sd/sqrt(Rput.summary$n) 
+
+#calculate margin of error for CI
+alpha = .05 #95% confidence interval
+Rput.summary$me = qt(1-alpha/2, df = Rput.summary$n)*Rput.summary$sem
+
+#error bars represent standard error of the mean
+Rput_Ant = ggplot(Rput.summary, aes(x = condition, y = mean)) + 
+  geom_bar(position = position_dodge(), stat="identity", fill="red", width=.5) +
+  geom_errorbar(aes(ymin=mean-sem, ymax=mean+sem), width=.3) +
+  labs(x = "Anticipation", y = "Percent BOLD signal change in R Put") +
+  ggtitle("Anticipatory R Putamen Activity") +
+  scale_y_continuous(limits=c(-.3, .4)) +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank())
+print(Rput_Ant)
+
+##ELS effects
+ELScond = c(rep(x=d$ELS.subjcat3, times = 4))
+Rputbar.els = data.frame(condition.2,Rput.pe,ELScond) #concatenate vectors
+Rput.means = aggregate(Rputbar.els$Rput.pe, list(ELS = Rputbar.els$ELScond, cond = Rputbar.els$condition.2), mean) #sort pe means by condition and ELS cat
+Rput.sd = aggregate(Rputbar.els$Rput.pe, list(ELS = Rputbar.els$ELScond, cond = Rputbar.els$condition.2), sd)
+Rput.n = aggregate(Rputbar.els$Rput.pe, list(ELS = Rputbar.els$ELScond, cond = Rputbar.els$condition.2), length)
+
+Rput.summary.els = data.frame(
+  Rput.means,  #x = mean
+  sd = Rput.sd[3], #x.1 = sd
+  n = Rput.n[3]) #x.2 = n
+
+#calculate standard error of the mean 
+Rput.summary.els$sem = Rput.summary.els$x.1/sqrt(Rput.summary.els$x.2) 
+factor(Rput.summary.els$ELS)
+Rput.summary.els$ELS = c(rep(c("low","high"), times = 4))
+
+
+limits = aes(ymin=x-sem, ymax=x+sem)
+#Rput.summary.els$cond2 = factor(Rput.summary.els$cond, as.character(Rput.summary.els$cond))
+g4.ELS = ggplot(Rput.summary.els, aes(x = cond, y = x, fill = ELS)) +  
+  geom_bar(stat="identity",position=position_dodge(), width = .75) +
+  geom_errorbar(limits,position=position_dodge(width=.75), width = .5) +
+  labs(x = "Anticipation", y = "% BOLD signal change") +
+  #scale_y_continuous(limits=c(-.35, .5)) +
+  ggtitle("Anticipatory R Put Activity") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank())
+print(g4.ELS)
+
+summary(lm(d$Rput_antloss-d$Rput_antnonloss ~ d$ELS.subjcat3 + d$v2 + d$gender + d$rt_loss-d$rt_nonloss))
+summary(lm(d$Rput_antloss-d$Rput_antnonloss ~ d$ELS.subj + d$v2 + d$gender + d$age + d$rt_loss-d$rt_nonloss)) #p=.0004
+
+summary(lm(d$Rput_antloss-d$Rput_antnonloss ~ d$ELS.subj)) #p=.005
+summary(lm(d$Rput_antloss-d$Rput_antnonloss ~ (d$rt_loss-d$rt_nonloss)))
+
+summary(lm(d$Rput_loss-d$Rput_nonloss ~ (d$ELS.subj * d$gender) + d$v2))
+cor.test(d$Rput_loss-d$Rput_nonloss, d$ELS.subj)
+plot(d$ELS.subj, d$Rput_loss-d$Rput_nonloss)
+abline(lm(d$Rput_loss-d$Rput_nonloss ~ d$ELS.subj))
+
+d$Rputlvnl = d$Rput_antloss-d$Rput_antnonloss
+c1 = ggplot(d, aes(x=ELS.subj, y=Rputlvnl)) + 
+    geom_point(size=5.5, col="darkorange") + 
+    labs(x = " ", y = " ") +
+    geom_smooth(method=lm, col="black") + 
+    theme_bw() +
+    theme(axis.text.y=element_text(size=20)) +
+    theme(axis.text.x=element_text(size=20))
+print(c1)
+dev.off()
+
+cor.test(d$Rput_antloss-d$Rput_antnonloss, d$ELS.subj)
+
+cor.test(d$Rput_antgain-d$Rput_antnongain,d$rt_gain)
+
+cor.test(d$Rput_antloss,d$ELS.subj)
+
+plot(d$ELS.subj, d$Rput_antloss-d$Rput_antnonloss)
+
+d2$Rputlvnl = d2$Rput_loss-d2$Rput_nonloss
+c2 = ggplot(d2, aes(x=ELS.subj, y=Rputlvnl)) + 
+    geom_point(size=4) + 
+    geom_smooth(method=lm)
+print(c2)
+
+cor.test(d$Rputlvnl,d$rt_loss-d$rt_nonloss)
+
+#gain v nongain
+cor.test(d$Rput_antgain-d$Rput_antloss, d$ELS.subj)
+summary(lm(d$Rput_antgain-d$Rput_antnongain ~ d$ELS.subj * d$gender + d$v2))
+summary(lm(d$Rput_antgain-d$Rput_antnongain ~ d$ELS.subjcat3 + d$gender + d$v2))
+
+#success
+summary(lm(d$Rput_loss-d$Rput_nonloss ~ d$ELS.subj + d$total_acc  + d$v2))
+summary(lm(d$Rput_loss-d$Rput_nonloss ~ d$ELS.subj + d$loss_acc-d$nonloss_acc  + d$v2))
+
+```
+
+Right Insula
+--------------
+```{r Rins}
+summary(lm(d$Lins_antloss-d$Lins_antnonloss ~ d$ELS.subj + d$v2 + d$gender + d$age))
+
+summary(lm(d$Lins_antloss-d$Lins_antnonloss ~ (d$rt_loss - d$rt_nonloss) + d$v2 + d$gender + d$age))
+
+r = lm(d$Lins_antloss-d$Lins_antnonloss ~ (d$rt_loss - d$rt_nonloss) + d$v2 + d$gender + d$age)
+
+
+#create dataframe to make bargraphs
+Rins.pe = c(d$Rins_antgain,d$Rins_antnongain,d$Rins_antloss,d$Rins_antnonloss)
+condition.2 = c(rep(x = "gain", times = 84), rep(x = "nongain", times = 84), rep(x = "loss", times = 84), rep(x = "nonloss", times = 84))
+Rinsbar = data.frame(condition.2,Rins.pe)
+
+Rins.summary = data.frame(
+  condition = levels(Rinsbar$condition.2),
+  mean = tapply(Rinsbar$Rins.pe, Rinsbar$condition, mean),
+  n = tapply(Rinsbar$Rins.pe, Rinsbar$condition, length),
+  sd = tapply(Rinsbar$Rins.pe, Rinsbar$condition, sd)
+  )
+
+#calculate standard error of the mean 
+Rins.summary$sem = Rins.summary$sd/sqrt(Rins.summary$n) 
+
+#calculate margin of error for CI
+alpha = .05 #95% confidence interval
+Rins.summary$me = qt(1-alpha/2, df = Rins.summary$n)*Rins.summary$sem
+
+#error bars represent standard error of the mean
+Rins_Ant = ggplot(Rins.summary, aes(x = condition, y = mean)) + 
+  geom_bar(position = position_dodge(), stat="identity", fill="red", width=.5) +
+  geom_errorbar(aes(ymin=mean-sem, ymax=mean+sem), width=.3) +
+  #scale_y_continuous(limits=c(-.3, .4)) +
+  labs(x = "Anticipation", y = "Percent BOLD signal change in R Ins") +
+  ggtitle("Anticipatory R Insula Activity") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank())
+print(Rins_Ant)
+
+###ELS effects
+Rinsbar.els = data.frame(condition.2,Rins.pe,ELScond) #concatenate vectors
+Rins.means = aggregate(Rinsbar.els$Rins.pe, list(ELS = Rinsbar.els$ELScond, cond = Rinsbar.els$condition.2), mean) #sort pe means by condition and ELS cat
+Rins.sd = aggregate(Rinsbar.els$Rins.pe, list(ELS = Rinsbar.els$ELScond, cond = Rinsbar.els$condition.2), sd)
+Rins.n = aggregate(Rinsbar.els$Rins.pe, list(ELS = Rinsbar.els$ELScond, cond = Rinsbar.els$condition.2), length)
+
+Rins.summary.els = data.frame(
+  Rins.means,  #x = mean
+  sd = Rins.sd[3], #x.1 = sd
+  n = Rins.n[3]) #x.2 = n
+
+#calculate standard error of the mean 
+Rins.summary.els$sem = Rins.summary.els$x.1/sqrt(Rins.summary.els$x.2) 
+factor(Rins.summary.els$ELS)
+Rins.summary.els$ELS = c(rep(c("low","high"), times = 4))
+
+
+limits = aes(ymin=x-sem, ymax=x+sem)
+g6.ELS = ggplot(Rins.summary.els, aes(x = cond, y = x, fill = ELS)) +  
+  geom_bar(stat="identity",position=position_dodge(), width = .75) +
+  geom_errorbar(limits,position=position_dodge(width=.75), width = .5) +
+  labs(x = "Anticipation", y = "% BOLD signal change") +
+  #scale_y_continuous(limits=c(-.35, .5)) +
+  ggtitle("Anticipatory R Ins Activity") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank())
+print(g6.ELS)
+
+d$Rinslvnl = d$Rins_antloss-d$Rins_antnonloss
+c3 = ggplot(d, aes(x=ELS.subj, y=Rinslvnl)) + 
+    geom_point(size=4) + 
+    geom_smooth(method=lm)
+print(c3)
+
+summary(lm(d$Rins_loss-d$Rins_nonloss ~ d$ELS.subj + d$v2 + d$gender + d$rt_loss-d$rt_nonloss))
+summary(lm(d$Rins_loss-d$Rins_nonloss ~ (d$ELS.subj * d$gender) + d$v2))
+cor.test(d$Rins_loss-d$Rins_nonloss,d$ELS.subj)
+
+#without outliers
+cor.test(d2$Rins_loss-d2$Rins_nonloss, d2$ELS.subj)
+summary(lm(d2$Rins_loss-d2$Rins_nonloss ~ d2$ELS.subj + d2$v2 + d2$gender + d2$rt_loss-d2$rt_nonloss))
+plot(d2$Rins_loss-d2$Rins_nonloss, d2$ELS.subj)
+
+d$Rputlvnl = d$Rins_loss-d$Rins_nonloss
+c3 = ggplot(d2, aes(x=ELS.subj, y=Rputlvnl)) + 
+    geom_point(size=4) + 
+    geom_smooth(method=lm)
+print(c3)
+
+c4 = ggplot(d, aes(x=ELS.subj, y=Rputlvnl)) + 
+    geom_point(size=4) + 
+    labs(x = "Subjective Early Life Stress", y = "% BOLD signal change Anticipation Loss > Nonloss") +
+    ggtitle("Anticipatory R Ins Activity as a function of ELS") +
+    geom_smooth(method=lm)
+print(c4)
+
+#gain v nongain
+cor.test(d$Rins_antgain-d$Rins_antnongain,d$ELS.subj)
+summary(lm(d$Rins_gain-d$Rins_nongain ~ poly(d$ELS.subj,2) + d$v2))
+
+#loss v nonloss
+cor.test(d$Rins_antloss-d$Rins_antnonloss,d$ELS.subj)
+
+summary(lm(d$Rins_antloss-d$Rins_antnonloss ~ d$ELS.subj + d$v2 + d$gender + d$rt_loss-d$rt_nonloss))
+summary(lm(d$Rins_antloss-d$Rins_antnonloss ~ d$ELS.subjcat3 + d$v2 + d$gender + d$rt_loss-d$rt_nonloss))
+
+#success
+summary(lm(d$Rins_loss-d$Rins_nonloss ~ d$ELS.subjcat2 * (d$loss_acc-d$nonloss_acc) + d$v2 + d$gender))
+```
+
+Left Putamen Outcome
+-----------------------
+```{r}
+Lput.pe = c(d$Lput_gain,d$Lput_nongain,d$Lput_loss,d$Lput_nonloss,d$Lput_unsg, d$Lput_avl)
+condition.2 = c(rep(x = "gain", times = 84), rep(x = "nongain", times = 84), rep(x = "loss", times = 84), rep(x = "nonloss", times = 84), rep(x = "unsg", times = 84), rep(x = "avl", times = 84))
+Lputbar = data.frame(condition.2,Lput.pe)
+
+Lput.summary = data.frame(
+  condition = levels(Lputbar$condition.2),
+  mean = tapply(Lputbar$Lput.pe, Lputbar$condition, mean, na.rm = TRUE),
+  n = tapply(Lputbar$Lput.pe, Lputbar$condition, length),
+  sd = tapply(Lputbar$Lput.pe, Lputbar$condition, sd, na.rm = TRUE)
+  )
+
+#calculate standard error of the mean 
+Lput.summary$sem = Lput.summary$sd/sqrt(Lput.summary$n) 
+
+#calculate margin of error for CI
+alpha = .05 #95% confidence interval
+Lput.summary$me = qt(1-alpha/2, df = Lput.summary$n)*Lput.summary$sem
+
+#error bars represent standard error of the mean
+Lput_Out = ggplot(Lput.summary, aes(x = condition, y = mean)) + 
+  geom_bar(position = position_dodge(), stat="identity", fill="red", width=.5) +
+  geom_errorbar(aes(ymin=mean-sem, ymax=mean+sem), width=.3) +
+  labs(x = "Outcome", y = "Percent BOLD signal change in L Put") +
+  ggtitle("Outcome L Putamen Activity") +
+  scale_y_continuous(limits=c(-.3, .4)) +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank())
+print(Lput_Out)
+
+##ELS effects
+ELScond = c(rep(x=d$ELS.subjcat3, times = 6))
+Lputbar.els = data.frame(condition.2,Lput.pe,ELScond) #concatenate vectors
+Lput.means = aggregate(Lputbar.els$Lput.pe, list(ELS = Lputbar.els$ELScond, cond = Lputbar.els$condition.2), mean, na.rm = TRUE) #sort pe means by condition and ELS cat
+Lput.sd = aggregate(Lputbar.els$Lput.pe, list(ELS = Lputbar.els$ELScond, cond = Lputbar.els$condition.2), sd, na.rm = TRUE)
+Lput.n = aggregate(Lputbar.els$Lput.pe, list(ELS = Lputbar.els$ELScond, cond = Lputbar.els$condition.2), length)
+
+Lput.summary.els = data.frame(
+  Lput.means,  #x = mean
+  sd = Lput.sd[3], #x.1 = sd
+  n = Lput.n[3]) #x.2 = n
+
+#calculate standard error of the mean 
+Lput.summary.els$sem = Lput.summary.els$x.1/sqrt(Lput.summary.els$x.2) 
+factor(Lput.summary.els$ELS)
+Lput.summary.els$ELS = c(rep(c("low","high"), times = 6))
+
+
+limits = aes(ymin=x-sem, ymax=x+sem)
+g4.ELS = ggplot(Lput.summary.els, aes(x = cond, y = x, fill = ELS)) +  
+  geom_bar(stat="identity",position=position_dodge(), width = .75) +
+  geom_errorbar(limits,position=position_dodge(width=.75), width = .5) +
+  labs(x = "Outcome", y = "% BOLD signal change") +
+  #scale_y_continuous(limits=c(-.35, .5)) +
+  ggtitle("Outcome L Put Activity") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank())
+print(g4.ELS)
+
+
+d$Lputlvnl = d$Lput_loss-d$Lput_nonloss
+c5 = ggplot(d, aes(x=ELS.subj, y=Lputlvnl)) + 
+    geom_point(size=4) + 
+    labs(x = "Subjective Early Life Stress", y = "% BOLD signal change Outcome Loss > Nonloss") +
+    ggtitle("Outcome L Put Activity as a function of ELS") +
+    geom_smooth(method=lm)
+print(c5)
+
+#ASEM
+d$Lputlvnl = d$Lput_loss-d$Lput_nonloss
+c5 = ggplot(d, aes(x=ELS.subj, y=Lputlvnl)) + 
+    geom_point(size=5.5, col="forestgreen") + 
+    labs(x = " ", y = " ") +
+    geom_smooth(method=lm, col="black") + 
+    theme_bw() +
+    theme(axis.text.y=element_text(size=20)) +
+    theme(axis.text.x=element_text(size=20))
+print(c5)
+
+cor.test(d$Lputlvnl,d$ELS.subj)
+summary(lm(d$Lput_loss-d$Lput_nonloss ~ d$ELS.subj + d$age + d$gender + d$v2 + d$rt_loss-d$rt_nonloss))
+
+
+##Asem
+LPut = read.csv("Lput_out_table.csv")
+LPut$cond2 = factor(LPut$cond, as.character(LPut$cond))
+limits = aes(ymin=mean-sem, ymax=mean+sem)
+g7.ELS = ggplot(LPut, aes(x = cond2, y = mean, fill = ELS)) +  
+  geom_bar(stat="identity",position=position_dodge(), width = .75) +
+  scale_fill_manual(values=c("tomato","deepskyblue")) +
+  geom_errorbar(limits,position=position_dodge(width=.75), width = .5) +
+  labs(x = " ", y = " ") +
+  #scale_y_continuous(limits=c(-.35, .5)) +
+  ggtitle(" ") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank()) + 
+  theme(legend.text=element_text(size=20)) + 
+  theme(legend.title=element_text(size=20)) + 
+  theme(axis.text.x=element_text(size=20)) +
+  theme(axis.text.y=element_text(size=20))
+print(g7.ELS)
+
+
+
+
+
+d$Lcaudlvnl = d$Lcaud_loss-d$Lcaud_nonloss
+cor.test(d$Lcaudlvnl,d$ELS.subj)
+
+```
+
+
+```{r}
+summary(lm(d$Lput_antloss-d$Lput_antnonloss ~ d$ELS.subjcat3 + d$v2)) #p = .02
+
+summary(lm(d$Rput_antloss-d$Rput_antnonloss ~ d$ELS.subjcat3 + d$v2 + d$gender + d$age)) #p = .005
+summary(lm(d$Rput_antloss-d$Rput_antnonloss ~ d$ELS.subj + d$v2 + d$gender + d$age)) #p = .0003
+summary(lm(d$Rput_antloss-d$Rput_antnonloss ~ d$ELS.subj + d$v2 + d$gender + d$age + (d$rt_loss-d$rt_nonloss))) #p = .0004
+coef(lm(d$Rput_antloss-d$Rput_antnonloss ~ d$ELS.subj + d$v2 + d$gender + d$age))
+
+d$Rputlvnl = d$Rput_antloss-d$Rput_antnonloss
+c1 = ggplot(d, aes(x=ELS.subj, y=Rputlvnl)) + 
+    geom_point(size=4) + 
+    labs(x = " ", y = " ") +
+    ggtitle(" ") +
+    geom_smooth(method=lm)
+print(c1)
+
+#geom_abline(intercept=-0.15387035, slope=0.01249830)
+
+summary(lm(d$rt_loss ~ d$Rput_antloss + d$gender + d$v2 + d$ELS.subj)) #p = .01
+
+summary(lm(d$Rput_antloss ~ d$rt_loss-d$rt_nonloss))
+
+
+summary(lm(d$Rput_antloss-d$Rput_antnonloss ~ d$rt_loss-d$rt_nonloss))
+c2 = ggplot(d, aes(x=Rput, y=Rputlvnl)) + 
+    geom_point(size=4) + 
+    labs(x = " ", y = " ") +
+    ggtitle(" ") +
+    geom_smooth(method=lm)
+print(c2)
+
+cor.test(d$Rputlvnl,d$ELS.subj) #p =.005
+cor.test(d$Rputlvnl,(d$rt_loss-d$rt_nonloss)) #p=.38
+
+
+Put = read.csv("Rput_ant_table.csv")
+Put$cond2 = factor(Put$cond, as.character(Put$cond))
+limits = aes(ymin=mean-sem, ymax=mean+sem)
+g5.ELS = ggplot(Put, aes(x = cond2, y = mean, fill = ELS)) +  
+  geom_bar(stat="identity",position=position_dodge(), width = .75) +
+  scale_fill_manual(values=c("tomato","deepskyblue")) +
+  geom_errorbar(limits,position=position_dodge(width=.75), width = .5) +
+  labs(x = " ", y = " ") +
+  #scale_y_continuous(limits=c(-.35, .5)) +
+  ggtitle(" ") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank()) + 
+  theme(legend.text=element_text(size=20)) + 
+  theme(legend.title=element_text(size=20)) + 
+  theme(axis.text.x=element_text(size=20)) +
+  theme(axis.text.y=element_text(size=20))
+print(g5.ELS)
+
+```
+
+Left Insula
+------------------
+```{r}
+summary(lm(d$Lins_antloss-d$Lins_antnonloss ~ d$ELS.subj + d$v2 + d$gender + d$age))
+
+summary(lm(d$Lins_antloss-d$Lins_antnonloss ~ (d$rt_loss - d$rt_nonloss) + d$v2 + d$gender + d$age))
+
+r = lm(d$Lins_antloss-d$Lins_antnonloss ~ (d$rt_loss - d$rt_nonloss) + d$v2 + d$gender + d$age)
+
+
+cor.test(d$Lins_antloss-d$Lins_antnonloss,d$ELS.subj) #p=.007, r = .29
+cor.test(d$Lins_antgain-d$Lins_antnongain,d$ELS.subj) #ns
+
+
+#create dataframe to make bargraphs
+Lins.pe = c(d$Lins_antgain,d$Lins_antnongain,d$Lins_antloss,d$Lins_antnonloss)
+condition.2 = c(rep(x = "gain", times = 84), rep(x = "nongain", times = 84), rep(x = "loss", times = 84), rep(x = "nonloss", times = 84))
+Linsbar = data.frame(condition.2,Lins.pe)
+
+Lins.summary = data.frame(
+  condition = levels(Linsbar$condition.2),
+  mean = tapply(Linsbar$Lins.pe, Linsbar$condition, mean),
+  n = tapply(Linsbar$Lins.pe, Linsbar$condition, length),
+  sd = tapply(Linsbar$Lins.pe, Linsbar$condition, sd)
+  )
+
+#calculate standard error of the mean 
+Lins.summary$sem = Lins.summary$sd/sqrt(Lins.summary$n) 
+
+#calculate margin of error for CI
+alpha = .05 #95% confidence interval
+Lins.summary$me = qt(1-alpha/2, df = Lins.summary$n)*Lins.summary$sem
+
+#error bars represent standard error of the mean
+Lins_Ant = ggplot(Lins.summary, aes(x = condition, y = mean)) + 
+  geom_bar(position = position_dodge(), stat="identity", fill="red", width=.5) +
+  geom_errorbar(aes(ymin=mean-sem, ymax=mean+sem), width=.3) +
+  #scale_y_continuous(limits=c(-.3, .4)) +
+  labs(x = "Anticipation", y = "Percent BOLD signal change in R Ins") +
+  ggtitle("Anticipatory R Insula Activity") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank())
+print(Lins_Ant)
+
+###ELS effects
+Linsbar.els = data.frame(condition.2,Lins.pe,ELScond) #concatenate vectors
+Lins.means = aggregate(Linsbar.els$Lins.pe, list(ELS = Linsbar.els$ELScond, cond = Linsbar.els$condition.2), mean) #sort pe means by condition and ELS cat
+Lins.sd = aggregate(Linsbar.els$Lins.pe, list(ELS = Linsbar.els$ELScond, cond = Linsbar.els$condition.2), sd)
+Lins.n = aggregate(Linsbar.els$Lins.pe, list(ELS = Linsbar.els$ELScond, cond = Linsbar.els$condition.2), length)
+
+Lins.summary.els = data.frame(
+  Lins.means,  #x = mean
+  sd = Lins.sd[3], #x.1 = sd
+  n = Lins.n[3]) #x.2 = n
+
+#calculate standard error of the mean 
+Lins.summary.els$sem = Lins.summary.els$x.1/sqrt(Lins.summary.els$x.2) 
+factor(Lins.summary.els$ELS)
+Lins.summary.els$ELS = c(rep(c("low","high"), times = 4))
+
+
+levels(Lins.summary.els$cond2)=c("gain","gain","nongain","nongain","loss","loss","nonloss","nonloss")
+
+limits = aes(ymin=x-sem, ymax=x+sem)
+#Lins.summary.els$cond2 = factor(Lins.summary.els$cond, as.character(Lins.summary.els$cond))
+g6.ELS = ggplot(Lins.summary.els, aes(x = cond, y = x, fill = ELS)) +  
+  geom_bar(stat="identity",position=position_dodge(), width = .75) +
+  geom_errorbar(limits,position=position_dodge(width=.75), width = .5) +
+  labs(x = "Anticipation", y = "% BOLD signal change") +
+  #scale_y_continuous(limits=c(-.35, .5)) +
+  ggtitle("Anticipatory L Ins Activity") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank())
+print(g6.ELS)
+
+
+#ASEM
+d$Linslvnl = d$Lins_antloss-d$Lins_antnonloss
+c3 = ggplot(d, aes(x=ELS.subj, y=Linslvnl)) + 
+    geom_point(size=5.5, col="darkorange") + 
+    labs(x = " ", y = " ") +
+    geom_smooth(method=lm, col="black") + 
+    theme_bw() +
+    theme(axis.text.y=element_text(size=20)) +
+    theme(axis.text.x=element_text(size=20))
+print(c3)
+
+#summary(lm(d$Rput_antloss-d$Rput_antnonloss ~ d$ELS.subj + d$v2 + d$gender + d$age + d$rt_loss-d$rt_nonloss)) #p=.0004
+
+#summary(lm(d$Rput_antloss-d$Rput_antnonloss ~ d$ELS.subj)) #p=.005
+
+summary(lm(d$Lins_antloss-d$Lins_antnonloss ~ d$ELS.subj + d$v2 + d$gender + d$age + d$rt_loss-d$rt_nonloss))
+summary(lm(d$Lins_antloss-d$Lins_antnonloss ~ (d$ELS.subj * d$gender) + d$v2))
+cor.test(d$Lins_antloss-d$Lins_antnonloss,d$ELS.subj)
+
+
+d$Rputlvnl = d$Lins_loss-d$Lins_nonloss
+c3 = ggplot(d2, aes(x=ELS.subj, y=Rputlvnl)) + 
+    geom_point(size=4) + 
+    geom_smooth(method=lm)
+print(c3)
+
+c4 = ggplot(d, aes(x=ELS.subj, y=Rputlvnl)) + 
+    geom_point(size=4) + 
+    labs(x = "Subjective Early Life Stress", y = "% BOLD signal change Anticipation Loss > Nonloss") +
+    ggtitle("Anticipatory R Ins Activity as a function of ELS") +
+    geom_smooth(method=lm)
+print(c4)
+
+##Asem
+INS = read.csv("Lins_ant_table.csv")
+INS$cond2 = factor(INS$cond, as.character(INS$cond))
+limits = aes(ymin=mean-sem, ymax=mean+sem)
+g6.ELS = ggplot(INS, aes(x = cond2, y = mean, fill = ELS)) +  
+  geom_bar(stat="identity",position=position_dodge(), width = .75) +
+  scale_fill_manual(values=c("tomato","deepskyblue")) +
+  geom_errorbar(limits,position=position_dodge(width=.75), width = .5) +
+  labs(x = " ", y = " ") +
+  #scale_y_continuous(limits=c(-.35, .5)) +
+  ggtitle(" ") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank()) + 
+  theme(legend.text=element_text(size=20)) + 
+  theme(legend.title=element_text(size=20)) + 
+  theme(axis.text.x=element_text(size=20)) +
+  theme(axis.text.y=element_text(size=20))
+print(g6.ELS)
+
+
+

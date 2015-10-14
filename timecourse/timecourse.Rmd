@@ -1,0 +1,49 @@
+---
+title: "timecourse"
+---
+
+```{r read in data}
+
+setwd("~/Documents/ELS/KIDMID/scripts/timecourse")
+antgain = read.csv("timecourse_native_NAcc_antgain26-Apr-2015.csv", header = FALSE)
+antloss = read.csv("timecourse_native_NAcc_antloss26-Apr-2015.csv", header = FALSE)
+antnongain = read.csv("timecourse_native_NAcc_antnongain26-Apr-2015.csv", header = FALSE)
+antnonloss = read.csv("timecourse_native_NAcc_antnonloss26-Apr-2015.csv", header = FALSE)
+
+cols=c("-6","-4","-2","0","+2","+4","+6")
+
+colnames(antgain)=cols
+colnames(antloss)=cols
+colnames(antnongain)=cols
+colnames(antnonloss)=cols
+
+gainmean = apply(antgain,2,mean)
+lossmean = apply(antloss,2,mean)
+nongainmean = apply(antnongain,2,mean)
+nonlossmean = apply(antnonloss,2,mean)
+
+plot(gainmean)
+plot(lossmean)
+plot(nongainmean)
+plot(nonlossmean)
+
+ggplot(data=antgain,
+       aes(x=colnames(antgain), y=apply(antgain,2,mean)) +
+       geom_line())
+
+
+
+gainmean = apply(antgain,2,mean)
+gainsd = apply(antgain,2,sd)
+n = nrow(antgain)
+
+
+
+gainmean = c(mean(antgain$V1),mean(antgain$V2),mean(antgain$V3),mean(antgain$V4), mean(antgain$V5), mean(antgain$V6),mean(antgain$V7))
+gainsd = c(sd(antgain$V1),sd(antgain$V2),sd(antgain$V3),sd(antgain$V4), sd(antgain$V5), sd(antgain$V6),sd(antgain$V7))
+gainsem = 
+  
+  
+  
+nongainmean = c(mean(antnongain$V1),mean(antnongain$V2),mean(antnongain$V3),mean(antnongain$V4), mean(antnongain$V5), mean(antnongain$V6),mean(antnongain$V7))  
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             

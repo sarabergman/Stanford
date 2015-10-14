@@ -1,6 +1,6 @@
 #!/bin/sh
 
-for subj in 104; do  #no commas, use 0xx, separated by space
+for subj in 118; do  #no commas, use 0xx, separated by space
 #subj=021
 
 if [ $(hostname) = sbergman.stanford.edu ] ;
@@ -52,4 +52,5 @@ bet ${subj}_reoriented_anat ${subj}_anat_brain.nii  #skull strip, rename
 
 #rename to subj_anat_brain.nii.gz
 #cp ${subj}_anat_bet_.4.nii.gz  ${subj}_anat_brain.nii.gz
+
 done

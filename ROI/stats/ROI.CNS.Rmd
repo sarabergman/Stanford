@@ -1,0 +1,778 @@
+---
+title: "Gender, ELS, kidmid"
+output: html_document
+---
+
+```{r load in data}
+require(ggplot2)
+setwd("~/Documents/ELS/KIDMID/Analysis/ROI/70N_Model5.1")
+a = read.csv("Model5.1_RNacc_HO_anticipation24-Mar-2015.csv")
+o = read.csv("Model5.1_RNacc_HO_outcome24-Mar-2015.csv")
+setwd("~/Documents/ELS/KIDMID/Analysis/behavior")
+b = read.csv("all_behavior_10-Feb-2015.csv")
+#removing behavioral outliers and #removing noisey subjects
+b = b[-c(14,15,24,26,33,38),] 
+```
+
+```{r}
+#is version correlated with ELS?
+#as.factor(b$gender)
+factor(b$gender)
+#as.factor(b$v2)
+factor(b$v2)
+cor.test(b$v2,b$ELS.subj) #p = .01
+cor.test(b$gender,b$ELS.subj) #p = .18
+
+plot(b$ELS.subj,b$v2)
+mean(b$ELS.subj[b$v2==1]) #9.85
+mean(b$ELS.subj[b$v2==2]) #5.40
+
+plot(b$ELS.subj,b$gender)
+mean(b$ELS.subj[b$gender==1]) #6.93
+mean(b$ELS.subj[b$gender==2]) #4.96
+
+summary(lm(b$ELS.subj ~ b$gender + b$v2)) #gender effect ns, v2 effect p = .03
+```
+
+The version of the task is related to ELS - kids who had the first version of the task have higher mean ELS.subj scores than kids who had the second version of the task. Gender is not related to ELS.
+
+```{r merge data}
+d = cbind(b,a,o) #merge data frames
+d$gender = as.factor(d$gender)
+d$v2 = as.factor(d$v2)
+levels(d$gender) = c("female","male")
+
+hist(d$ELS.subj)
+d$ELS.subjcat2 = cut(d$ELS.subj, c(0,5,10,30), right=FALSE, labels=c("low","int","high")) 
+d$ELS.subjcat3 = cut(d$ELS.subj, c(0,5,30), right=FALSE, labels=c("low","high"))
+table(d$ELS.subjcat2)
+table(d$ELS.subjcat3)
+```
+
+RNAcc
+----------
+```{r}
+#is ELS and/or gender related to RNAcc ant activation (controlling for version)
+
+#ant gain
+summary(lm(d$rNAcc.antgain ~ d$ELS.subj)) #ns
+summary(lm(d$rNAcc.antgain ~ d$ELS.subjcat2)) #ns
+summary(lm(d$rNAcc.antgain ~ d$ELS.subj + d$v2)) #ns
+summary(lm(d$rNAcc.antgain ~ d$ELS.subj + d$v2 + d$gender)) #ns
+summary(lm(d$rNAcc.antgain ~ d$ELS.subj + d$v2 + d$gender)) #ns
+summary(lm(d$rNAcc.antgain ~ (d$ELS.subj * d$gender) + d$v2)) #ns
+summary(lm(d$rNAcc.antgain ~ d$ELS.subjcat2 + d$v2 + d$gender)) #ns
+summary(lm(d$rNAcc.antgain ~ d$ELS.subjcat2 + d$v2 + d$gender + d$rt_gain)) #ns
+summary(lm(d$rNAcc.antgain ~ d$gender)) #ns
+#ant loss
+summary(lm(d$rNAcc.antloss ~ d$ELS.subj)) #ns
+summary(lm(d$rNAcc.antloss ~ d$gender + d$v2))
+summary(lm(d$rNAcc.antloss ~ d$ELS.subjcat2)) #ns
+summary(lm(d$rNAcc.antloss ~ d$ELS.subj + d$v2)) #ns
+summary(lm(d$rNAcc.antloss ~ d$ELS.subj + d$v2 + d$gender)) #ns
+summary(lm(d$rNAcc.antloss ~ d$ELS.subj + d$v2 + d$gender)) #ns
+summary(lm(d$rNAcc.antloss ~ (d$ELS.subj * d$gender) + d$v2)) #ns
+summary(lm(d$rNAcc.antloss ~ d$ELS.subjcat2 + d$v2 + d$gender)) #ns, p=.08 for high ELS v low ELS but no effect for ELS.subjcat3
+summary(lm(d$rNAcc.antloss ~ d$ELS.subjcat2 + d$v2 + d$gender + d$rt_loss)) #ns
+
+#ant gain v nongain
+summary(lm(d$rNAcc.antgain-d$rNAcc.antnongain ~ d$ELS.subj)) #ns
+summary(lm(d$rNAcc.antgain-d$rNAcc.antnongain ~ d$ELS.subjcat2)) #ns
+summary(lm(d$rNAcc.antgain-d$rNAcc.antnongain ~ d$ELS.subjcat3 + d$v2)) #ns
+summary(lm(d$rNAcc.antgain-d$rNAcc.antnongain ~ d$ELS.subj + d$v2 + d$gender)) #ns
+summary(lm(d$rNAcc.antgain-d$rNAcc.antnongain ~ d$v2 + d$gender))
+summary(lm(d$rNAcc.antgain-d$rNAcc.antnongain ~ d$v2 + d$gender)) #ns
+summary(lm(d$rNAcc.antgain-d$rNAcc.antnongain ~ d$ELS.subj + d$v2 + d$gender)) #ns
+summary(lm(d$rNAcc.antgain-d$rNAcc.antnongain ~ (d$ELS.subj * d$gender) + d$v2)) #ns
+summary(lm(d$rNAcc.antgain-d$rNAcc.antnongain ~ d$ELS.subj + d$v2 + d$gender)) #ns
+summary(lm(d$rNAcc.antgain-d$rNAcc.antnongain ~ d$ELS.subj + d$v2 + d$gender + d$rt_gain)) #ns
+
+#ant loss v nonloss
+summary(lm(d$rNAcc.antloss-d$rNAcc.antnonloss ~ d$ELS.subj)) #ns
+summary(lm(d$rNAcc.antloss-d$rNAcc.antnonloss ~ d$ELS.subjcat2)) # ELS high vs low, p = .04
+
+plot(d$rNAcc.antloss-d$rNAcc.antnonloss ~ d$ELS.subjcat2)
+
+summary(lm(d$rNAcc.antloss-d$rNAcc.antnonloss ~ d$ELS.subjcat2 + d$v2)) # ELS high vs low, p = .01, version p =.01
+summary(lm(d$rNAcc.antloss-d$rNAcc.antnonloss ~ d$ELS.subjcat2 + d$v2 + d$rt_loss)) #ELS high vs low, version still sig
+summary(lm(d$rNAcc.antloss-d$rNAcc.antnonloss ~ d$ELS.subjcat2 + d$v2 + d$rt_loss-d$rt_nonloss)) #ELS high vs low, version still sig
+
+lo.mean = mean((d$rNAcc.antloss-d$rNAcc.antnonloss)[d$ELS.subjcat2=="low"])
+int.mean = mean((d$rNAcc.antloss-d$rNAcc.antnonloss)[d$ELS.subjcat2=="int"])
+hi.mean = mean((d$rNAcc.antloss-d$rNAcc.antnonloss)[d$ELS.subjcat2=="high"])
+barplot(height=c(lo.mean,int.mean,hi.mean))
+t.test((d$rNAcc.antloss-d$rNAcc.antnonloss)[d$ELS.subjcat2=="low"],(d$rNAcc.antloss-d$rNAcc.antnonloss)[d$ELS.subjcat2=="high"])
+#p = .06
+#Difference between RNacc antloss and nonloss activation is greater for high ELS vs low ELS.
+
+summary(lm(d$rNAcc.antloss-d$rNAcc.antnonloss ~ d$ELS.subjcat2 + d$v2 + d$gender)) # ELS high vs low p = .01, version p =.03
+
+summary(lm(d$rNAcc.antloss-d$rNAcc.antnonloss ~ d$v2 + d$gender)) #ns
+summary(lm(d$rNAcc.antloss-d$rNAcc.antnonloss ~ d$ELS.subj + d$v2 + d$gender)) #p = .05 for ELS
+
+summary(lm(d$rNAcc.antloss-d$rNAcc.antnonloss ~ (d$ELS.subjcat3 * d$gender) + d$v2)) #ns
+summary(lm(d$rNAcc.antloss-d$rNAcc.antnonloss ~ d$gender)) #ns
+summary(lm(d$rNAcc.antloss-d$rNAcc.antnonloss ~ d$ELS.subj + d$v2 + d$gender)) #ELS effect p = .05, no effect for gender
+summary(lm(d$rNAcc.antloss-d$rNAcc.antnonloss ~ d$ELS.subj + d$v2 + d$gender + d$rt_loss)) #ns
+
+#ant gain v loss
+summary(lm(d$rNAcc.antgain-d$rNAcc.antloss ~ d$gender + d$v2)) #ns
+summary(lm(d$rNAcc.antgain-d$rNAcc.antloss ~ (d$gender * d$ELS.subjcat3) + d$v2)) #ns
+```
+When controlling for version, the difference between activation in right NAcc for anticipation of loss vs nonloss is assoc. with greater ELS. There is no effect of gender on R NAcc and there is no interaction of gender and ELS.
+
+
+
+```{r}
+#is ELS and/or gender related to RNAcc outcome activation (controlling for version)
+
+#out gain
+summary(lm(d$rNAcc.gain ~ d$ELS.subj)) #p =.05
+summary(lm(d$rNAcc.gain ~ d$ELS.subj + d$v2)) #p = .03 
+cor.test(d$rNAcc.gain,d$ELS.subj) #r = .23, p = .05
+p1 = plot(d$rNAcc.gain ~ d$ELS.subj)
+abline(lm(d$rNAcc.gain ~ d$ELS.subj + d$v2))
+
+summary(lm(d$rNAcc.gain ~ d$ELS.subjcat2)) #high v low ELS p = .05
+summary(lm(d$rNAcc.gain ~ d$ELS.subjcat3)) #high v low ELS p = .07
+
+
+summary(lm(d$rNAcc.gain ~ d$ELS.subj + d$v2 + d$gender)) #ELS p = .04, gender p = .09
+summary(lm(d$rNAcc.gain ~ d$ELS.subjcat2 + d$v2 + d$gender)) #ns high vs low ELS p = .05, gender p = .09
+summary(lm(d$rNAcc.gain ~ (d$ELS.subjcat3 * d$gender) + d$v2)) #ns no interaction
+summary(lm(d$rNAcc.gain ~ d$ELS.subj + d$v2 + d$gender + d$rt_gain)) #ELS p = .04
+summary(lm(d$rNAcc.gain ~ d$gender)) #ns
+
+
+#out loss
+summary(lm(d$rNAcc.loss ~ d$ELS.subj)) #ns
+summary(lm(d$rNAcc.loss ~ d$gender)) #p = .08
+summary(lm(d$rNAcc.loss ~ d$gender + d$v2)) #gender p = .06
+summary(lm(d$rNAcc.loss ~ d$ELS.subjcat3 + d$v2)) #ns
+summary(lm(d$rNAcc.loss ~ d$ELS.subj + d$v2)) #ns
+summary(lm(d$rNAcc.loss ~ d$ELS.subj + d$v2 + d$gender)) #gender p = .06
+summary(lm(d$rNAcc.loss ~ d$ELS.subjcat2 + d$v2 + d$gender)) #gender p = .05
+summary(lm(d$rNAcc.loss ~ d$ELS.subjcat3 + d$v2 + d$gender)) #gender p = .06
+summary(lm(d$rNAcc.loss ~ (d$ELS.subj * d$gender) + d$v2)) #gender p = .07
+summary(lm(d$rNAcc.loss ~ (d$ELS.subjcat3 * d$gender) + d$v2)) #gender p = .08
+summary(lm(d$rNAcc.loss ~ d$ELS.subjcat2 + d$v2 + d$gender + d$rt_loss)) #gender p=.07
+summary(lm(d$rNAcc.loss ~ d$ELS.subjcat3 + d$v2 + d$gender + d$rt_loss)) #gender p=.07
+summary(lm(d$rNAcc.loss ~ d$ELS.subj + d$v2 + d$gender + d$rt_loss)) #gender p=.08
+
+#out gain v nongain
+summary(lm(d$rNAcc.gain-d$rNAcc.nongain ~ d$ELS.subj)) #p = .08
+summary(lm(d$rNAcc.gain-d$rNAcc.nongain ~ d$ELS.subj + d$v2)) #p = .04
+p2 = plot(d$rNAcc.gain-d$rNAcc.nongain ~ d$ELS.subj)
+abline(lm(d$rNAcc.gain-d$rNAcc.nongain ~ d$ELS.subj))
+
+summary(lm(d$rNAcc.gain-d$rNAcc.nongain ~ d$ELS.subjcat3)) #ns
+summary(lm(d$rNAcc.gain-d$rNAcc.nongain ~ d$ELS.subjcat2 + d$v2)) #ns
+summary(lm(d$rNAcc.gain-d$rNAcc.nongain ~ d$ELS.subj + d$v2 + d$gender)) #ns
+summary(lm(d$rNAcc.gain-d$rNAcc.nongain ~ d$v2 + d$gender)) #ns
+
+summary(lm(d$rNAcc.gain-d$rNAcc.nongain ~ d$ELS.subj * d$gender)) 
+summary(lm(d$rNAcc.gain-d$rNAcc.nongain ~ (d$ELS.subj * d$gender) + d$v2)) #main effect ELS p = .05, interaction gender and ELS p = .02, model sig p=.01
+summary(lm(d$rNAcc.gain-d$rNAcc.nongain ~ (d$ELS.subjcat3 * d$gender) + d$v2)) #ns
+summary(lm(d$rNAcc.gain-d$rNAcc.nongain ~ (d$ELS.subj * d$gender) + d$v2 + (d$rt_gain-d$rt_nongain))) #same as above, main model sig p=.03
+summary(lm(d$rNAcc.gain-d$rNAcc.nongain ~ d$ELS.subj + d$v2 + d$gender + d$rt_gain)) #ns
+
+library(psych)
+describeBy(d$ELS.subj, d$gender, mat = TRUE)
+
+colors = c("indianred1","orange")
+
+d$rNAcc.gainvnongain = d$rNAcc.gain-d$rNAcc.nongain
+ggplot(data = d, aes(x=ELS.subj, y = rNAcc.gainvnongain, color = gender)) + scale_color_manual(values=colors) +
+  theme_bw() +
+  geom_point(size=4) + stat_smooth(method="lm") +
+  #theme(plot.title = element_text(size = 15, hjust=0.5)) + 
+  theme(axis.title.y = element_blank()) + theme(axis.title.x = element_blank()) + 
+  #theme(legend.key = element_rect(fill = "white")) + 
+  theme(legend.text = element_text(size = 20)) + 
+  theme(legend.title = element_text(size = 20)) + 
+  theme(axis.text = element_text(size = 20, color = "black"))
+  
+
+#theme(panel.grid.major = element_blank())
+
+#theme(panel.grid.major = element_blank(),
+   #labs(x="Early Life Stress", y="% BOLD Signal Change during Outcome of Gain - Nongain") +
+  #ggtitle("Right Nucleus Accumbens Activity \n During Outcome of Gain - Nongain \n is Moderated by Gender")
+
+
+restricted.ELS = subset(d, d$ELS.subj <= 20)
+summary(lm(restricted.ELS$rNAcc.gain-restricted.ELS$rNAcc.nongain ~ (restricted.ELS$ELS.subj * restricted.ELS$gender) + restricted.ELS$v2))
+#interaction.plot(x.factor = d$ELS.subj, trace.factor = d$gender, response = d$rNAcc.gainvnongain, type = c("l"))
+
+#out gain v loss
+d$rNAcc.gainvloss = d$rNAcc.gain-d$rNAcc.loss
+summary(lm(d$rNAcc.gainvloss ~ d$ELS.subj * d$gender)) 
+summary(lm(d$rNAcc.gainvloss ~ (d$ELS.subj * d$gender) + d$v2)) 
+summary(lm(d$rNAcc.gainvloss ~ d$ELS.subj + d$v2))
+summary(lm(d$rNAcc.gainvloss ~ d$ELS.subj + d$gender + d$v2))
+```
+
+When controlling for version, the ELS is associated with greater activation during outcome of gains > baseline in rNAcc. 
+
+R NAcc activation for outcome of loss > baseline is weakly related to gender (p=.05, when controlling for version and 3-level ELS).
+
+The differene between activation for outcome of gain v nongain is related to ELS (p=.04, controlling for version).
+
+
+```{r}
+setwd("~/Documents/ELS/KIDMID/Analysis/ROI/70N_Model5.1")
+out = read.csv("featquery_outcome26-Mar-2015.csv")
+out = cbind(out,b)
+out$gender = as.factor(out$gender)
+out$v2 = as.factor(out$v2)
+levels(out$gender) = c("F","M")
+
+out$ELS.subjcat2 = cut(out$ELS.subj, c(0,5,10,30), right=FALSE, labels=c("low","int","high")) 
+out$ELS.subjcat3 = cut(out$ELS.subj, c(0,5,30), right=FALSE, labels=c("low","high"))
+
+ant = read.csv("featquery_anticipation26-Mar-2015.csv")
+ant = cbind(ant,b)
+ant$gender = as.factor(ant$gender)
+ant$v2 = as.factor(ant$v2)
+levels(ant$gender) = c("F","M")
+ant$ELS.subjcat2 = cut(ant$ELS.subj, c(0,5,10,30), right=FALSE, labels=c("low","int","high")) 
+ant$ELS.subjcat3 = cut(ant$ELS.subj, c(0,5,30), right=FALSE, labels=c("low","high"))
+
+```
+
+OUTCOME
+============
+
+Left Caudate
+----------------
+```{r}
+#gain v nongain - marginal gender interaction with continuous, significant with hi int low
+summary(lm(out$Lcaud_gain-out$Lcaud_nongain ~ out$ELS.subj + out$v2)) 
+summary(lm(out$Lcaud_gain-out$Lcaud_nongain ~ out$ELS.subj + out$gender + out$v2)) #ns
+summary(lm(out$Lcaud_gain-out$Lcaud_nongain ~ (out$ELS.subj * out$gender) + out$v2)) #interaction term p = .06
+summary(lm(out$Lcaud_gain-out$Lcaud_nongain ~ (out$ELS.subjcat2 * out$gender) + out$v2)) #high v low interaction term p = .04
+summary(lm(out$Lcaud_gain-out$Lcaud_nongain ~ (out$ELS.subjcat3 * out$gender) + out$v2)) #ns
+
+out$Lcaud_gainvnongain = out$Lcaud_gain-out$Lcaud_nongain
+ggplot(data = out, aes(x=ELS.subj, y = Lcaud_gainvnongain, color=gender)) +
+  geom_point(size=4) + stat_smooth(method="lm") + theme(panel.grid.major = element_blank(), plot.title = element_text(size = 15, hjust=0.5)) + 
+  labs(x = "Early Life Stress", y = "Percent BOLD signal change \n Outcome of Gain - Nongain") +
+  ggtitle("Left Caudate Activity \n During Outcome of Gain - Nongain \n is Moderated by Gender")
+
+#gain
+summary(lm(out$Lcaud_gain ~ out$ELS.subj + out$v2)) #ns
+summary(lm(out$Lcaud_gain ~ (out$ELS.subjcat3 * out$gender) + out$v2)) #ns
+
+#loss v nonloss - no gender interaction
+summary(lm(out$Lcaud_loss-out$Lcaud_nonloss ~ out$ELS.subj + out$v2)) # p = .001
+summary(lm(out$Lcaud_loss-out$Lcaud_nonloss ~ out$ELS.subj + out$v2 + out$rt_loss-out$rt_nonloss)) #p = .001
+summary(lm(out$Lcaud_loss-out$Lcaud_nonloss ~ out$ELS.subj + out$gender + out$v2)) #p = .001
+summary(lm(out$Lcaud_loss-out$Lcaud_nonloss ~ (out$ELS.subj * out$gender) + out$v2)) #interaction term not significant
+summary(lm(out$Lcaud_loss-out$Lcaud_nonloss ~ (out$ELS.subjcat2 * out$gender) + out$v2)) #interaction term not significant
+summary(lm(out$Lcaud_loss-out$Lcaud_nonloss ~ (out$ELS.subjcat3 * out$gender) + out$v2)) #interaction term not significant
+
+###ELS EFFECTS
+#rearrange data to make bargraphs for ELS and condition effects 
+ELScond = c(rep(x=out$ELS.subjcat3, times = 4)) #rep d$ELS.subjcat2 vector 4 times
+Lcaud.pe = c(out$Lcaud_gain,out$Lcaud_nongain,out$Lcaud_loss,out$Lcaud_nonloss)
+condition.2 = c(rep(x = "gain", times = 70), rep(x = "nongain", times = 70), rep(x = "loss", times = 70), rep(x = "nonloss", times = 70))
+Lcaudbar.els = data.frame(condition.2,Lcaud.pe,ELScond) #concatenate vectors
+Lcaud.means = aggregate(Lcaudbar.els$Lcaud.pe, list(ELS = Lcaudbar.els$ELScond, cond = Lcaudbar.els$condition.2), mean) #sort pe means by condition and ELS cat
+Lcaud.sd = aggregate(Lcaudbar.els$Lcaud.pe, list(ELS = Lcaudbar.els$ELScond, cond = Lcaudbar.els$condition.2), sd)
+Lcaud.n = aggregate(Lcaudbar.els$Lcaud.pe, list(ELS = Lcaudbar.els$ELScond, cond = Lcaudbar.els$condition.2), length)
+
+Lcaud.summary.els = data.frame(
+  Lcaud.means,  #x = mean
+  sd = Lcaud.sd[3], #x.1 = sd
+  n = Lcaud.n[3]) #x.2 = n
+
+#calculate standard error of the mean 
+Lcaud.summary.els$sem = Lcaud.summary.els$x.1/sqrt(Lcaud.summary.els$x.2) 
+factor(Lcaud.summary.els$ELS)
+Lcaud.summary.els$ELS = c(rep(c("low","high"), times = 4))
+
+colors = rep(c("violetred4","red3"),4)
+
+limits = aes(ymin=x-sem, ymax=x+sem)
+g2.ELS = ggplot(Lcaud.summary.els, aes(x = cond, y = x, fill = ELS)) +  
+  geom_bar(stat="identity",position=position_dodge(), width = .75) +
+  geom_errorbar(limits,position=position_dodge(width=.75), width = .5) +
+  labs(x = "Anticipation", y = "% BOLD signal change") +
+  #scale_y_continuous(limits=c(-.35, .5)) +
+  #ggtitle("Anticipatory L Caud Activity") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank()) + 
+  theme(axis.title.y = element_blank()) + theme(axis.title.x = element_blank()) + 
+  #theme(legend.key = element_rect(fill = "white")) + 
+  theme(legend.text = element_text(size = 20)) + 
+  theme(legend.title = element_text(size = 20)) + 
+  theme(axis.text = element_text(size = 20)) +
+  scale_fill_manual(values=colors)
+print(g2.ELS)
+
+
+
+
+```
+
+Left Putamen
+--------------------
+```{r}
+#gain v nongain
+summary(lm(out$Lput_gain-out$Lput_nongain ~ out$ELS.subj + out$v2)) #ns
+summary(lm(out$Lput_gain-out$Lput_nongain ~ out$ELS.subj + out$gender + out$v2)) #ns
+summary(lm(out$Lput_gain-out$Lput_nongain ~ (out$ELS.subj * out$gender) + out$v2)) #ns
+summary(lm(out$Lput_gain-out$Lput_nongain ~ (out$ELS.subjcat2 * out$gender) + out$v2)) #ns
+summary(lm(out$Lput_gain-out$Lput_nongain ~ (out$ELS.subjcat3 * out$gender) + out$v2)) #ns
+
+#loss v nonloss
+summary(lm(out$Lput_loss-out$Lput_nonloss ~ out$ELS.subj + out$v2)) #p=.01
+summary(lm(out$Lput_loss-out$Lput_nonloss ~ out$ELS.subj + out$gender + out$v2)) #p=.02
+summary(lm(out$Lput_loss-out$Lput_nonloss ~ (out$ELS.subj * out$gender) + out$v2))
+summary(lm(out$Lput_loss-out$Lput_nonloss ~ (out$ELS.subjcat3 * out$gender) + out$v2))
+
+
+ELScond = c(rep(x=out$ELS.subjcat3, times = 4)) #rep d$ELS.subjcat2 vector 4 times
+Lput.pe = c(out$Lput_gain,out$Lput_nongain,out$Lput_loss,out$Lput_nonloss)
+condition.2 = c(rep(x = "gain", times = 70), rep(x = "nongain", times = 70), rep(x = "loss", times = 70), rep(x = "nonloss", times = 70))
+Lputbar.els = data.frame(condition.2,Lput.pe,ELScond) #concatenate vectors
+Lput.means = aggregate(Lputbar.els$Lput.pe, list(ELS = Lputbar.els$ELScond, cond = Lputbar.els$condition.2), mean) #sort pe means by condition and ELS cat
+Lput.sd = aggregate(Lputbar.els$Lput.pe, list(ELS = Lputbar.els$ELScond, cond = Lputbar.els$condition.2), sd)
+Lput.n = aggregate(Lputbar.els$Lput.pe, list(ELS = Lputbar.els$ELScond, cond = Lputbar.els$condition.2), length)
+
+Lput.summary.els = data.frame(
+  Lput.means,  #x = mean
+  sd = Lput.sd[3], #x.1 = sd
+  n = Lput.n[3]) #x.2 = n
+
+#calculate standard error of the mean 
+Lput.summary.els$sem = Lput.summary.els$x.1/sqrt(Lput.summary.els$x.2) 
+factor(Lput.summary.els$ELS)
+Lput.summary.els$ELS = c(rep(c("low","high"), times = 4))
+
+colors = rep(c("violetred4","red3"),4)
+
+limits = aes(ymin=x-sem, ymax=x+sem)
+g3.ELS = ggplot(Lput.summary.els, aes(x = cond, y = x, fill = ELS)) +  
+  geom_bar(stat="identity",position=position_dodge(), width = .75) +
+  geom_errorbar(limits,position=position_dodge(width=.75), width = .5) +
+  labs(x = "Anticipation", y = "% BOLD signal change") +
+  #scale_y_continuous(limits=c(-.35, .5)) +
+  #ggtitle("Anticipatory L Caud Activity") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank()) + 
+  theme(axis.title.y = element_blank()) + theme(axis.title.x = element_blank()) + 
+  #theme(legend.key = element_rect(fill = "white")) + 
+  theme(legend.text = element_text(size = 20)) + 
+  theme(legend.title = element_text(size = 20)) + 
+  theme(axis.text = element_text(size = 20)) +
+  scale_fill_manual(values=colors)
+print(g3.ELS)
+
+
+
+```
+
+ANTICIPATION
+=======================
+
+Right Insula
+--------------
+```{r}
+#ant gain v nongain - no interaction
+summary(lm(ant$Rins_gain-ant$Rins_nongain ~ ant$ELS.subj + ant$v2)) #ns
+summary(lm(ant$Rins_gain-ant$Rins_nongain ~ ant$ELS.subj + ant$gender + ant$v2)) #ns
+summary(lm(ant$Rins_gain-ant$Rins_nongain ~ (ant$ELS.subj * ant$gender) + ant$v2)) #ns
+summary(lm(ant$Rins_gain-ant$Rins_nongain ~ (ant$ELS.subjcat2 * ant$gender) + ant$v2))
+summary(lm(ant$Rins_gain-ant$Rins_nongain ~ (ant$ELS.subjcat3 * ant$gender) + ant$v2))
+
+#ant loss v nonloss
+summary(lm(ant$Rins_loss-ant$Rins_nonloss ~ ant$ELS.subj + ant$v2)) # p =.0008
+summary(lm(ant$Rins_loss-ant$Rins_nonloss ~ ant$ELS.subj + ant$gender + ant$v2))
+summary(lm(ant$Rins_loss-ant$Rins_nonloss ~ (ant$ELS.subj * ant$gender) + ant$v2))
+summary(lm(ant$Rins_loss-ant$Rins_nonloss ~ (ant$ELS.subjcat2 * ant$gender) + ant$v2)) #interaction p=.09
+summary(lm(ant$Rins_loss-ant$Rins_nonloss ~ (ant$ELS.subjcat3 * ant$gender) + ant$v2))
+
+ELScond = c(rep(x=ant$ELS.subjcat3, times = 4)) #rep d$ELS.subjcat2 vector 4 times
+Rins.pe = c(ant$Rins_gain,ant$Rins_nongain,ant$Rins_loss,ant$Rins_nonloss)
+condition.2 = c(rep(x = "gain", times = 70), rep(x = "nongain", times = 70), rep(x = "loss", times = 70), rep(x = "nonloss", times = 70))
+Rinsbar.els = data.frame(condition.2,Rins.pe,ELScond) #concatenate vectors
+Rins.means = aggregate(Rinsbar.els$Rins.pe, list(ELS = Rinsbar.els$ELScond, cond = Rinsbar.els$condition.2), mean) #sort pe means by condition and ELS cat
+Rins.sd = aggregate(Rinsbar.els$Rins.pe, list(ELS = Rinsbar.els$ELScond, cond = Rinsbar.els$condition.2), sd)
+Rins.n = aggregate(Rinsbar.els$Rins.pe, list(ELS = Rinsbar.els$ELScond, cond = Rinsbar.els$condition.2), length)
+
+Rins.summary.els = data.frame(
+  Rins.means,  #x = mean
+  sd = Rins.sd[3], #x.1 = sd
+  n = Rins.n[3]) #x.2 = n
+
+#calculate standard error of the mean 
+Rins.summary.els$sem = Rins.summary.els$x.1/sqrt(Rins.summary.els$x.2) 
+factor(Rins.summary.els$ELS)
+Rins.summary.els$ELS = c(rep(c("low","high"), times = 4))
+
+colors = rep(c("violetred4","red3"),4)
+
+limits = aes(ymin=x-sem, ymax=x+sem)
+g4.ELS = ggplot(Rins.summary.els, aes(x = cond, y = x, fill = ELS)) +  
+  geom_bar(stat="identity",position=position_dodge(), width = .75) +
+  geom_errorbar(limits,position=position_dodge(width=.75), width = .5) +
+  labs(x = "Anticipation", y = "% BOLD signal change") +
+  #scale_y_continuous(limits=c(-.35, .5)) +
+  #ggtitle("Anticipatory L Caud Activity") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank()) + 
+  theme(axis.title.y = element_blank()) + theme(axis.title.x = element_blank()) + 
+  #theme(legend.key = element_rect(fill = "white")) + 
+  theme(legend.text = element_text(size = 20)) + 
+  theme(legend.title = element_text(size = 20)) + 
+  theme(axis.text = element_text(size = 20)) +
+  scale_fill_manual(values=colors)
+print(g4.ELS)
+
+
+```
+
+Right Putamen
+------------------
+
+```{r}
+#gain v nongain
+summary(lm(ant$Rput_gain-ant$Rput_nongain ~ ant$ELS.subj + ant$v2)) #ns
+summary(lm(ant$Rput_gain-ant$Rput_nongain ~ ant$ELS.subj + ant$gender + ant$v2)) #ns
+summary(lm(ant$Rput_gain-ant$Rput_nongain ~ (ant$ELS.subj * ant$gender) + ant$v2)) #ns
+summary(lm(ant$Rput_gain-ant$Rput_nongain ~ (ant$ELS.subjcat2 * ant$gender) + ant$v2)) #ns
+summary(lm(ant$Rput_gain-ant$Rput_nongain ~ (ant$ELS.subjcat3 * ant$gender) + ant$v2)) #ns
+
+summary(lm(ant$Rput_loss-ant$Rput_nonloss ~ ant$ELS.subj + ant$v2)) #p=.0001
+summary(lm(ant$Rput_loss-ant$Rput_nonloss ~ ant$ELS.subj + ant$gender + ant$v2))
+summary(lm(ant$Rput_loss-ant$Rput_nonloss ~ (ant$ELS.subj * ant$gender) + ant$v2)) #interaction is not significant
+summary(lm(ant$Rput_loss-ant$Rput_nonloss ~ (ant$ELS.subjcat2 * ant$gender) + ant$v2)) 
+summary(lm(ant$Rput_loss-ant$Rput_nonloss ~ (ant$ELS.subjcat3 * ant$gender) + ant$v2))
+```
+
+Right Caudate
+--------------------
+```{r}
+summary(lm(ant$Rcaud_gain-ant$Rcaud_nongain ~ ant$ELS.subj + ant$v2)) #ns
+summary(lm(ant$Rcaud_gain-ant$Rcaud_nongain ~ ant$ELS.subj + ant$gender + ant$v2)) #ns
+summary(lm(ant$Rcaud_gain-ant$Rcaud_nongain ~ (ant$ELS.subj * ant$gender) + ant$v2)) #ns
+summary(lm(ant$Rcaud_gain-ant$Rcaud_nongain ~ (ant$ELS.subjcat2 * ant$gender) + ant$v2))
+summary(lm(ant$Rcaud_gain-ant$Rcaud_nongain ~ (ant$ELS.subjcat3 * ant$gender) + ant$v2))
+
+#ant loss v nonloss
+summary(lm(ant$Rcaud_loss-ant$Rcaud_nonloss ~ ant$ELS.subj + ant$v2)) 
+summary(lm(ant$Rcaud_loss-ant$Rcaud_nonloss ~ ant$ELS.subj + ant$gender + ant$v2))
+summary(lm(ant$Rcaud_loss-ant$Rcaud_nonloss ~ (ant$ELS.subj * ant$gender) + ant$v2))
+summary(lm(ant$Rcaud_loss-ant$Rcaud_nonloss ~ (ant$ELS.subjcat2 * ant$gender) + ant$v2)) 
+summary(lm(ant$Rcaud_loss-ant$Rcaud_nonloss ~ (ant$ELS.subjcat3 * ant$gender) + ant$v2))
+```
+
+Left Caudate
+--------------------
+```{r}
+summary(lm(ant$Lcaud_gain-ant$Lcaud_nongain ~ ant$ELS.subj + ant$v2)) #ns
+summary(lm(ant$Lcaud_gain-ant$Lcaud_nongain ~ ant$ELS.subj + ant$gender + ant$v2)) #ns
+summary(lm(ant$Lcaud_gain-ant$Lcaud_nongain ~ (ant$ELS.subj * ant$gender) + ant$v2)) #ns
+summary(lm(ant$Lcaud_gain-ant$Lcaud_nongain ~ (ant$ELS.subjcat2 * ant$gender) + ant$v2))
+summary(lm(ant$Lcaud_gain-ant$Lcaud_nongain ~ (ant$ELS.subjcat3 * ant$gender) + ant$v2))
+
+#ant loss v nonloss
+summary(lm(ant$Lcaud_loss-ant$Lcaud_nonloss ~ ant$ELS.subj + ant$v2)) 
+summary(lm(ant$Lcaud_loss-ant$Lcaud_nonloss ~ ant$ELS.subj + ant$gender + ant$v2))
+summary(lm(ant$Lcaud_loss-ant$Lcaud_nonloss ~ (ant$ELS.subj * ant$gender) + ant$v2))
+summary(lm(ant$Lcaud_loss-ant$Lcaud_nonloss ~ (ant$ELS.subjcat2 * ant$gender) + ant$v2)) 
+summary(lm(ant$Lcaud_loss-ant$Lcaud_nonloss ~ (ant$ELS.subjcat3 * ant$gender) + ant$v2))
+
+#plot main effect
+Lcaud.pe = c(ant$Lcaud_gain,ant$Lcaud_nongain,ant$Lcaud_loss,ant$Lcaud_nonloss)
+condition.2 = c(rep(x = "gain", times = 70), rep(x = "nongain", times = 70), rep(x = "loss", times = 70), rep(x = "nonloss", times = 70))
+Lcaudbar = data.frame(condition.2,Lcaud.pe)
+
+Lcaud.summary = data.frame(
+  condition = levels(Lcaudbar$condition.2),
+  mean = tapply(Lcaudbar$Lcaud.pe, Lcaudbar$condition, mean),
+  n = tapply(Lcaudbar$Lcaud.pe, Lcaudbar$condition, length),
+  sd = tapply(Lcaudbar$Lcaud.pe, Lcaudbar$condition, sd)
+  )
+
+#calculate standard error of the mean 
+Lcaud.summary$sem = Lcaud.summary$sd/sqrt(Lcaud.summary$n) 
+
+#calculate margin of error for CI
+alpha = .05 #95% confidence interval
+Lcaud.summary$me = qt(1-alpha/2, df = Lcaud.summary$n)*Lcaud.summary$sem
+
+#error bars represent standard error of the mean
+g2.SE = ggplot(Lcaud.summary, aes(x = condition, y = mean)) + 
+  geom_bar(position = position_dodge(), stat="identity", fill="red", width=.5) +
+  geom_errorbar(aes(ymin=mean-sem, ymax=mean+sem), width=.3) +
+  labs(x = "Anticipation", y = "Percent BOLD signal change in L Caud") +
+  #scale_y_continuous(limits=c(-.3, .4)) +
+  ggtitle("Anticipatory L Caud Activity") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank())
+print(g2.SE)
+
+#plotting ELS
+ELScond = c(rep(x=ant$ELS.subjcat3, times = 4)) #rep d$ELS.subjcat2 vector 4 times
+Lcaudbar.els = data.frame(condition.2,Lcaud.pe,ELScond) #concatenate vectors
+Lcaud.means = aggregate(Lcaudbar.els$Lcaud.pe, list(ELS = Lcaudbar.els$ELScond, cond = Lcaudbar.els$condition.2), mean) #sort pe means by condition and ELS cat
+Lcaud.sd = aggregate(Lcaudbar.els$Lcaud.pe, list(ELS = Lcaudbar.els$ELScond, cond = Lcaudbar.els$condition.2), sd)
+Lcaud.n = aggregate(Lcaudbar.els$Lcaud.pe, list(ELS = Lcaudbar.els$ELScond, cond = Lcaudbar.els$condition.2), length)
+
+Lcaud.summary.els = data.frame(
+  Lcaud.means,  #x = mean
+  sd = Lcaud.sd[3], #x.1 = sd
+  n = Lcaud.n[3]) #x.2 = n
+
+#calculate standard error of the mean 
+Lcaud.summary.els$sem = Lcaud.summary.els$x.1/sqrt(Lcaud.summary.els$x.2) 
+factor(Lcaud.summary.els$ELS)
+#Lcaud.summary.els$ELS = c(rep(c("low","int","high"), times = 4))
+Lcaud.summary.els$ELS = c(rep(c("low","high"), times = 4))
+
+limits = aes(ymin=x-sem, ymax=x+sem)
+g2.ELS = ggplot(Lcaud.summary.els, aes(x = cond, y = x, fill = ELS)) +  
+  geom_bar(stat="identity",position=position_dodge(), width = .75) +
+  geom_errorbar(limits,position=position_dodge(width=.75), width = .5) +
+  labs(x = "Anticipation", y = "% BOLD signal change") +
+  #scale_y_continuous(limits=c(-.35, .5)) +
+  ggtitle("Anticipatory L Caud Activity") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank())
+print(g2.ELS)
+
+
+
+
+```
+
+Left Putamen
+--------------------
+```{r}
+summary(lm(ant$Lput_gain-ant$Lput_nongain ~ ant$ELS.subj + ant$v2)) #ns
+summary(lm(ant$Lput_gain-ant$Lput_nongain ~ ant$ELS.subj + ant$gender + ant$v2)) #ns
+summary(lm(ant$Lput_gain-ant$Lput_nongain ~ (ant$ELS.subj * ant$gender) + ant$v2)) #ns
+summary(lm(ant$Lput_gain-ant$Lput_nongain ~ (ant$ELS.subjcat2 * ant$gender) + ant$v2))
+summary(lm(ant$Lput_gain-ant$Lput_nongain ~ (ant$ELS.subjcat3 * ant$gender) + ant$v2))
+
+#ant loss v nonloss
+summary(lm(ant$Lput_loss-ant$Lput_nonloss ~ ant$ELS.subj + ant$v2)) 
+summary(lm(ant$Lput_loss-ant$Lput_nonloss ~ ant$ELS.subj + ant$gender + ant$v2))
+summary(lm(ant$Lput_loss-ant$Lput_nonloss ~ (ant$ELS.subj * ant$gender) + ant$v2))
+summary(lm(ant$Lput_loss-ant$Lput_nonloss ~ (ant$ELS.subjcat2 * ant$gender) + ant$v2)) 
+summary(lm(ant$Lput_loss-ant$Lput_nonloss ~ (ant$ELS.subjcat3 * ant$gender) + ant$v2))
+
+ELScond = c(rep(x=ant$ELS.subjcat3, times = 4)) #rep d$ELS.subjcat2 vector 4 times
+Lput.pe = c(ant$Lput_gain,ant$Lput_nongain,ant$Lput_loss,ant$Lput_nonloss)
+condition.2 = c(rep(x = "gain", times = 70), rep(x = "nongain", times = 70), rep(x = "loss", times = 70), rep(x = "nonloss", times = 70))
+Lputbar.els = data.frame(condition.2,Lput.pe,ELScond) #concatenate vectors
+Lput.means = aggregate(Lputbar.els$Lput.pe, list(ELS = Lputbar.els$ELScond, cond = Lputbar.els$condition.2), mean) #sort pe means by condition and ELS cat
+Lput.sd = aggregate(Lputbar.els$Lput.pe, list(ELS = Lputbar.els$ELScond, cond = Lputbar.els$condition.2), sd)
+Lput.n = aggregate(Lputbar.els$Lput.pe, list(ELS = Lputbar.els$ELScond, cond = Lputbar.els$condition.2), length)
+
+Lput.summary.els = data.frame(
+  Lput.means,  #x = mean
+  sd = Lput.sd[3], #x.1 = sd
+  n = Lput.n[3]) #x.2 = n
+
+#calculate standard error of the mean 
+Lput.summary.els$sem = Lput.summary.els$x.1/sqrt(Lput.summary.els$x.2) 
+factor(Lput.summary.els$ELS)
+Lput.summary.els$ELS = c(rep(c("low","high"), times = 4))
+
+colors = rep(c("violetred4","red3"),4)
+
+limits = aes(ymin=x-sem, ymax=x+sem)
+g6.ELS = ggplot(Lput.summary.els, aes(x = cond, y = x, fill = ELS)) +  
+  geom_bar(stat="identity",position=position_dodge(), width = .75) +
+  geom_errorbar(limits,position=position_dodge(width=.75), width = .5) +
+  labs(x = "Anticipation", y = "% BOLD signal change") +
+  #scale_y_continuous(limits=c(-.35, .5)) +
+  #ggtitle("Anticipatory L Caud Activity") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank()) + 
+  theme(axis.title.y = element_blank()) + theme(axis.title.x = element_blank()) + 
+  #theme(legend.key = element_rect(fill = "white")) + 
+  theme(legend.text = element_text(size = 20)) + 
+  theme(legend.title = element_text(size = 20)) + 
+  theme(axis.text = element_text(size = 20)) +
+  scale_fill_manual(values=colors)
+print(g6.ELS)
+```
+
+Left Insula
+---------------
+```{r}
+summary(lm(ant$Lins_gain-ant$Lins_nongain ~ ant$ELS.subj + ant$v2)) #ns
+summary(lm(ant$Lins_gain-ant$Lins_nongain ~ ant$ELS.subj + ant$gender + ant$v2)) #ns
+summary(lm(ant$Lins_gain-ant$Lins_nongain ~ (ant$ELS.subj * ant$gender) + ant$v2)) #ns
+summary(lm(ant$Lins_gain-ant$Lins_nongain ~ (ant$ELS.subjcat2 * ant$gender) + ant$v2))
+summary(lm(ant$Lins_gain-ant$Lins_nongain ~ (ant$ELS.subjcat3 * ant$gender) + ant$v2))
+
+#ant loss v nonloss
+summary(lm(ant$Lins_loss-ant$Lins_nonloss ~ ant$ELS.subj + ant$v2)) 
+summary(lm(ant$Lins_loss-ant$Lins_nonloss ~ ant$ELS.subj + ant$gender + ant$v2))
+summary(lm(ant$Lins_loss-ant$Lins_nonloss ~ (ant$ELS.subj * ant$gender) + ant$v2))
+summary(lm(ant$Lins_loss-ant$Lins_nonloss ~ (ant$ELS.subjcat2 * ant$gender) + ant$v2)) 
+summary(lm(ant$Lins_loss-ant$Lins_nonloss ~ (ant$ELS.subjcat3 * ant$gender) + ant$v2))
+
+ELScond = c(rep(x=ant$ELS.subjcat3, times = 4)) #rep d$ELS.subjcat2 vector 4 times
+Lins.pe = c(ant$Lins_gain,ant$Lins_nongain,ant$Lins_loss,ant$Lins_nonloss)
+condition.2 = c(rep(x = "gain", times = 70), rep(x = "nongain", times = 70), rep(x = "loss", times = 70), rep(x = "nonloss", times = 70))
+Linsbar.els = data.frame(condition.2,Lins.pe,ELScond) #concatenate vectors
+Lins.means = aggregate(Linsbar.els$Lins.pe, list(ELS = Linsbar.els$ELScond, cond = Linsbar.els$condition.2), mean) #sort pe means by condition and ELS cat
+Lins.sd = aggregate(Linsbar.els$Lins.pe, list(ELS = Linsbar.els$ELScond, cond = Linsbar.els$condition.2), sd)
+Lins.n = aggregate(Linsbar.els$Lins.pe, list(ELS = Linsbar.els$ELScond, cond = Linsbar.els$condition.2), length)
+
+Lins.summary.els = data.frame(
+  Lins.means,  #x = mean
+  sd = Lins.sd[3], #x.1 = sd
+  n = Lins.n[3]) #x.2 = n
+
+#calculate standard error of the mean 
+Lins.summary.els$sem = Lins.summary.els$x.1/sqrt(Lins.summary.els$x.2) 
+factor(Lins.summary.els$ELS)
+Lins.summary.els$ELS = c(rep(c("low","high"), times = 4))
+
+colors = rep(c("violetred4","red3"),4)
+
+limits = aes(ymin=x-sem, ymax=x+sem)
+g5.ELS = ggplot(Lins.summary.els, aes(x = cond, y = x, fill = ELS)) +  
+  geom_bar(stat="identity",position=position_dodge(), width = .75) +
+  geom_errorbar(limits,position=position_dodge(width=.75), width = .5) +
+  labs(x = "Anticipation", y = "% BOLD signal change") +
+  #scale_y_continuous(limits=c(-.35, .5)) +
+  #ggtitle("Anticipatory L Caud Activity") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank()) + 
+  theme(axis.title.y = element_blank()) + theme(axis.title.x = element_blank()) + 
+  #theme(legend.key = element_rect(fill = "white")) + 
+  theme(legend.text = element_text(size = 20)) + 
+  theme(legend.title = element_text(size = 20)) + 
+  theme(axis.text = element_text(size = 20)) +
+  scale_fill_manual(values=colors)
+print(g5.ELS)
+
+
+```
+
+vmPFC cluster from gender
+-----------------------------
+```{r}
+pfc = read.csv("Model5.1_vmpfc26-Mar-2015.csv")
+pfc = cbind(pfc,b)
+pfc$gender = as.factor(pfc$gender)
+pfc$v2 = as.factor(pfc$v2)
+levels(pfc$gender) = c("F","M")
+
+hist(pfc$ELS.subj)
+pfc$ELS.subjcat2 = cut(pfc$ELS.subj, c(0,5,10,30), right=FALSE, labels=c("low","int","high")) 
+pfc$ELS.subjcat3 = cut(pfc$ELS.subj, c(0,5,30), right=FALSE, labels=c("low","high"))
+
+#outcome gain v nongain
+
+summary(lm(pfc$gain-pfc$nongain ~ pfc$ELS.subj + pfc$v2))
+summary(lm(pfc$gain-pfc$nongain ~ pfc$ELS.subj + pfc$gender + pfc$v2))
+summary(lm(pfc$gain-pfc$nongain ~ (pfc$ELS.subjcat3 * pfc$gender) + pfc$v2))
+
+#outcome gain v loss
+summary(lm(pfc$gain-pfc$loss ~ pfc$ELS.subj + pfc$v2))
+summary(lm(pfc$gain-pfc$loss ~ pfc$ELS.subj + pfc$gender + pfc$v2))
+summary(lm(pfc$gain-pfc$nonloss ~ (pfc$ELS.subjcat3 * pfc$gender) + pfc$v2))
+
+#ant gain
+summary(lm(pfc$antgain ~ pfc$gender + pfc$v2))
+
+t.test(pfc$antgain[pfc$gender=="F"],pfc$antgain[pfc$gender=="M"])
+
+#ant gain v loss
+summary(lm(pfc$antgain-pfc$antloss ~ pfc$ELS.subj + pfc$v2))
+summary(lm(pfc$antgain-pfc$antloss ~ pfc$gender + pfc$v2))
+summary(lm(pfc$antgain-pfc$antloss ~ pfc$ELS.subj + pfc$gender + pfc$v2))
+summary(lm(pfc$antgain-pfc$antloss ~ (pfc$ELS.subj * pfc$gender) + pfc$v2))
+summary(lm(pfc$antgain-pfc$antloss ~ (pfc$ELS.subjcat2 * pfc$gender) + pfc$v2))
+summary(lm(pfc$antgain-pfc$antloss ~ (pfc$ELS.subjcat3 * pfc$gender) + pfc$v2))
+
+vmpfc.pe = c(pfc$antgain,pfc$antnongain,pfc$antloss,pfc$antnonloss)
+condition.2 = c(rep(x = "gain", times = 70), rep(x = "nongain", times = 70), rep(x = "loss", times = 70), rep(x = "nonloss", times = 70))
+vmpfcbar = data.frame(condition.2,vmpfc.pe)
+
+vmpfc.summary = data.frame(
+  condition = levels(vmpfcbar$condition.2),
+  mean = tapply(vmpfcbar$vmpfc.pe, vmpfcbar$condition, mean),
+  n = tapply(vmpfcbar$vmpfc.pe, vmpfcbar$condition, length),
+  sd = tapply(vmpfcbar$vmpfc.pe, vmpfcbar$condition, sd)
+  )
+
+#calculate standard error of the mean 
+vmpfc.summary$sem = vmpfc.summary$sd/sqrt(vmpfc.summary$n) 
+
+#calculate margin of error for CI
+alpha = .05 #95% confidence interval
+vmpfc.summary$me = qt(1-alpha/2, df = vmpfc.summary$n)*vmpfc.summary$sem
+
+#error bars represent standard error of the mean
+g2.SE = ggplot(vmpfc.summary, aes(x = condition, y = mean)) + 
+  geom_bar(position = position_dodge(), stat="identity", fill="red", width=.5) +
+  geom_errorbar(aes(ymin=mean-sem, ymax=mean+sem), width=.3) +
+  labs(x = "Anticipation", y = "Percent BOLD signal change in vmpfc") +
+  #scale_y_continuous(limits=c(-.3, .4)) +
+  ggtitle("Anticipatory vmpfc Activity") +
+  geom_hline(yintercept=0, linetype = 1) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank()) 
+print(g2.SE)
+
+
+
+#gender plot
+Gcond = c(rep(x=pfc$gender, times = 2)) #rep d$ELS.subjcat2 vector 4 times
+vmpfcbar.G = data.frame(condition.2,vmpfc.pe,Gcond) #concatenate vectors
+vmpfc.means = aggregate(vmpfcbar.G$vmpfc.pe, list(G = vmpfcbar.G$Gcond, cond = vmpfcbar.G$condition.2), mean) #sort pe means by condition and ELS cat
+vmpfc.sd = aggregate(vmpfcbar.G$vmpfc.pe, list(G = vmpfcbar.G$Gcond, cond = vmpfcbar.G$condition.2), sd)
+vmpfc.n = aggregate(vmpfcbar.G$vmpfc.pe, list(G = vmpfcbar.G$Gcond, cond = vmpfcbar.G$condition.2), length)
+
+vmpfc.summary.G = data.frame(
+  vmpfc.means,  #x = mean
+  sd = vmpfc.sd[3], #x.1 = sd
+  n = vmpfc.n[3]) #x.2 = n
+
+#calculate standard error of the mean 
+vmpfc.summary.G$sem = vmpfc.summary.G$x.1/sqrt(vmpfc.summary.G$x.2) 
+factor(vmpfc.summary.G$G)
+vmpfc.summary.G$G = c(rep(c("female","male"), times = 4))
+
+colors = rep(c("indianred1","orange1"),4)
+
+limits = aes(ymin=x-sem, ymax=x+sem)
+g6.ELS = ggplot(vmpfc.summary.G, aes(x = cond, y = x, fill = G)) +  
+  geom_bar(stat="identity",position=position_dodge(), width = .75) +
+  geom_errorbar(limits,position=position_dodge(width=.75), width = .5) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank()) + 
+  theme(axis.title.y = element_blank()) + theme(axis.title.x = element_blank()) + 
+  #labs(x = "Anticipation", y = "% BOLD signal change") +
+  #scale_y_continuous(limits=c(-.35, .5)) +
+  #ggtitle("Anticipatory vmpfc Activity") +
+  geom_hline(yintercept=0, linetype = 1) +
+  #theme(panel.grid.major = element_blank()) + 
+  theme(legend.text = element_text(size = 20)) + 
+  theme(legend.title = element_blank()) + 
+  theme(axis.text = element_text(size = 20)) +
+  scale_fill_manual(values=colors)
+  
+print(g6.ELS)
+
+qplot(x=pfc$gender, y = pfc$gain-pfc$loss)
+
+#ant gain
+summary(lm(pfc$antgain ~ pfc$gender + pfc$v2))

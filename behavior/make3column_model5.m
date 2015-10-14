@@ -1,4 +1,4 @@
-% make3column_nomissed.m makes EV (.txt) files for L1 analysis, records RTs for each trial type, records accuracy for each trial type, 
+% make3column_model5.m makes EV (.txt) files for L1 analysis, records RTs for each trial type, records accuracy for each trial type, 
 % total accuracy, and number of trials for each outcome type that goes into
 % the model, as well as number of missed trials. The trials included in the
 % 3column files exclude trials where no button was pressed (missed trials).
@@ -11,6 +11,8 @@
 % trials. when in doubt, run both scripts.
 
 % allsubs_behavior.m compiles the behavioral output of this script for every subject.
+
+
 maindir = '/Users/sarabergman/Documents/ELS/KIDMID/';
 %maindir = '/Users/sarabergman/Documents/STANFORD/FYP/KIDMID/';
 %maindir = '/Volumes/TUXEDOSAM/KIDMID/';
@@ -20,7 +22,7 @@ maindir = '/Users/sarabergman/Documents/ELS/KIDMID/';
 %     '021','022','023','024','024','025','026','028','029','030','031','032','033','034','035','036','037','038','039','040','041','042', ...
 %     '043','045','046','047','048','049','050','051','054','055','056','057','058','059','060','061','062','064','065','067','068','069', ...
 %     '070','072','074','075','076','077','079','081','083','085','086','087','088','093'};  
-sublist = {'102','103'};  
+sublist = {'029'};  
 
 for s = 1:length(sublist)
     subID = sublist{s};
@@ -56,8 +58,11 @@ for s = 1:length(sublist)
     if strcmp(subID,'002')
         trigtime = raw{2,41};
         range = 3:74;
-    elseif strcmp(subID, '021') || strcmp(subID,'029')
+    elseif strcmp(subID, '021') 
         range = 4:73;  %only 70 trials
+        trigtime = raw{3,41};
+    elseif strcmp(subID,'029') 
+        range = 4:66; %only 63 trials acquired
         trigtime = raw{3,41};
     else
         trigtime = raw{3,41};  %trigtime  raw{3,41}, raw{2,41} for 002
